@@ -1,0 +1,62 @@
+<?php
+
+namespace Varhall\Dbino\Traits;
+
+
+use Varhall\Dbino\Events\DeleteArgs;
+use Varhall\Dbino\Events\RestoreArgs;
+
+trait SoftDeletes
+{
+    public function delete(): int
+    {
+        $args = new DeleteArgs([
+            'id'        => $this->getPrimary(),
+            'instance'  => $this,
+            'soft'      => true
+        ]);
+
+        $this->raise('deleting', $args);
+
+        $this->update([
+            $this->softDeleteColumn() => new \Nette\Utils\DateTime()
+        ]);
+
+        $this->raise('deleted',  $args);
+
+        return $this->getPrimary();
+    }
+
+    public function forceDelete(): int
+    {
+        return parent::delete();
+    }
+
+    public function restore()
+    {
+        $args = new RestoreArgs([
+            'id'        => $this->getPrimary(),
+            'instance'  => $this,
+        ]);
+
+        $this->raise('restoring', $args);
+
+        $this->update([
+            $this->softDeleteColumn() => NULL
+        ]);
+
+        $this->raise('restored', $args);
+
+        return $this;
+    }
+
+    public function isTrashed()
+    {
+        return $this->{$this->softDeleteColumn()} !== null;
+    }
+
+    protected function softDeleteColumn()
+    {
+        return 'deleted_at';
+    }
+}

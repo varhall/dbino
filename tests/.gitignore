@@ -1,0 +1,7 @@
+output
+/tmp
+/cache
+/*.log
+/coverage.html
+/coverage.xml
+/config
