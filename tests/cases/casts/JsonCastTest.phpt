@@ -4,18 +4,18 @@ namespace Varhall\Dbino\Tests\Cases;
 
 use Nette\Utils\Json;
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\JsonCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class JsonCastTest extends BaseTestCase
+class JsonCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
+        $factory = new AttributeCastFactory($this->getContainer());
 
         Assert::type(JsonCast::class, $factory->create('json'));
     }

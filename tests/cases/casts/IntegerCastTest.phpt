@@ -3,18 +3,18 @@
 namespace Varhall\Dbino\Tests\Cases;
 
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\IntegerCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class IntegerCastTest extends BaseTestCase
+class IntegerCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
+        $factory = new AttributeCastFactory($this->getContainer());
 
         Assert::type(IntegerCast::class, $factory->create('int'));
         Assert::type(IntegerCast::class, $factory->create('integer'));

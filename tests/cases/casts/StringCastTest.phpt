@@ -3,18 +3,18 @@
 namespace Varhall\Dbino\Tests\Cases;
 
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\StringCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class StringCastTest extends BaseTestCase
+class StringCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
+        $factory = new AttributeCastFactory($this->getContainer());
 
         Assert::type(StringCast::class, $factory->create('string'));
     }

@@ -18,9 +18,6 @@ use Varhall\Utilino\Utils\Reflection;
  */
 trait CollectionTrait
 {
-    /** @var Dbino */
-    protected $dbino;
-
     /** @var string */
     protected $class;
 
@@ -33,17 +30,10 @@ trait CollectionTrait
         if (preg_match('/^where(.*)If$/i', $name))
             return call_user_func_array([ $this, 'whereIf' ], array_merge([$name], $arguments));
 
-        if (preg_match('/^where/i', $name) && method_exists($this->class, $name))
-            return call_user_func_array([ $this->class, $name ], array_merge([$this], $arguments));
-    }
+        $repository = Dbino::_repository($this->class);
 
-    public function columns()
-    {
-        $columns = $this->dbino->explorer()->getConnection()->getSupplementalDriver()->getColumns($this->getName());
-
-        return array_map(function($column) {
-            return $column['name'];
-        }, $columns);
+        if (preg_match('/^where/i', $name) && method_exists($repository, $name))
+            return call_user_func_array([ $repository, $name ], array_merge([$this], $arguments));
     }
 
     protected function whereIf($method, $condition, ...$params)
@@ -95,7 +85,7 @@ trait CollectionTrait
         $result = parent::insert($data);
 
         if ($result instanceof Selection) {
-            return new Collection($result, $this->dbino, $this->class);
+            return new Collection($result, $this->class);
 
         } else if ($result instanceof ActiveRow) {
             $table = Reflection::readPrivateProperty($result, 'table');
@@ -112,7 +102,7 @@ trait CollectionTrait
 
     protected function createModel(array $data, Selection $table): Model
     {
-        $instance = $this->dbino->model($this->class);
+        $instance = Dbino::_model($this->class);
 
         Reflection::writePrivateProperty($instance, 'data', $data);
         Reflection::writePrivateProperty($instance, 'table', $table);
@@ -130,7 +120,7 @@ trait CollectionTrait
         if (!$this->isSoftDeletable())
             throw new \Nette\NotSupportedException('Model does not support soft deletes');
 
-        return Reflection::callPrivateMethod($this->dbino->model($this->class), 'softDeleteColumn');
+        return Dbino::_config($this->class, 'softDeleteColumn');
     }
 
 

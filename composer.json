@@ -3,7 +3,7 @@
 	"type": "library",
 	"description": "Nette Database Active Record Layer",
 	"keywords": ["nette", "orm", "database", "active record"],
-	"homepage": "https://gitlab.com/varhallpub/dbino",
+	"homepage": "https://github.com/varhall/dbino",
 	"license": "MIT",
         "authors": [
 		{
@@ -12,7 +12,7 @@
 		}
 	],
 	"support": {
-		"issues": "https://gitlab.com/varhallpub/dbino"
+		"issues": "https://github.com/varhall/dbino"
 	},
 
 	"require": {
@@ -20,35 +20,20 @@
 		"nette/utils": "^3.2.0",
 		"nette/database": "^3.0.7",
 		"nette/di": "^3.0.6",
-		"varhall/utilino": "^1.1",
-		"nette/bootstrap": "^3.1"
+		"nette/security": "^v3.1.4",
+		"varhall/utilino": "^1.1"
 	},
 
 	"require-dev": {
 		"ninjify/nunjuck": "^0.3.0",
 		"ninjify/qa": "^0.12",
-		"phpstan/phpstan": "^0.12",
-		"phpstan/phpstan-deprecation-rules": "^0.12",
-		"phpstan/phpstan-nette": "^0.12",
-		"phpstan/phpstan-strict-rules": "^0.12",
 		"mockery/mockery": "^1.4.3",
-		"nette/robot-loader": "v3.4.1"
+		"nette/bootstrap": "^3.1",
+		"nette/robot-loader": "v3.4.1",
+		"nette/http": "^v3.1.3"
 	},
 
 	"autoload": {
 		"classmap": ["src/"]
-	},
-
-	"autoload-dev": {
-		"classmap": ["tests/fixtures", "tests/engine", "tests/testino"]
-	},
-
-	"scripts": {
-		"tester:run": [
-			"nunjuck tests/cases -s -p php -c tests/config/php.ini"
-		],
-		"tester:watch": [
-			"nunjuck tests/cases -s -p php -c tests/config/php.ini -w tests -w src"
-		]
 	}
 }

@@ -32,24 +32,6 @@ trait TestDatabase
         });
     }
 
-    /*protected function createContainer()
-    {
-        $container = $this->parentCreateContainer();
-        $this->connection = $container->getByType(Connection::class);
-        $this->database = '__testino__' . getmypid();
-
-        $this->connection->onConnect[] = function() {
-            $this->resetDatabase();
-        };
-
-        register_shutdown_function(function () {
-            $this->dropDatabase();
-            $this->connection->disconnect();
-        });
-
-        return $container;
-    }*/
-
     protected function resetDatabase()
     {
         $this->dropDatabase();

@@ -4,6 +4,7 @@ namespace Varhall\Dbino\Tests\Models;
 
 use Nette\Database\Table\Selection;
 use Varhall\Dbino\Plugins\TimestampPlugin;
+use Varhall\Dbino\Tests\Repositories\BooksRepository;
 use Varhall\Dbino\Traits\SoftDeletes;
 use Varhall\Dbino\Traits\Timestamps;
 
@@ -22,11 +23,6 @@ class Book extends \Varhall\Dbino\Model
         'price'     => 'float'
     ];
 
-    public static function whereAvailable(Selection $selection, $value)
-    {
-        return $selection->where('available', $value);
-    }
-
     public function author()
     {
         return $this->belongsTo(Author::class, 'author_id');
@@ -38,6 +34,11 @@ class Book extends \Varhall\Dbino\Model
     }
  
     // configuration
+
+    protected function repository(): string
+    {
+        return BooksRepository::class;
+    }
 
     protected function table()
     {

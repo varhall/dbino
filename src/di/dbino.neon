@@ -1,0 +1,19 @@
+services:
+	dbino:
+		factory: Varhall\Dbino\Dbino
+		setup:
+			- Varhall\Dbino\Dbino::$container = @container
+
+	repository:
+		factory: Varhall\Dbino\Repository
+		autowired: false
+
+	# casts
+	- Varhall\Dbino\Casts\AttributeCastFactory
+	- Varhall\Dbino\Casts\BooleanCast
+	- Varhall\Dbino\Casts\DoubleCast
+	- Varhall\Dbino\Casts\FloatCast
+	- Varhall\Dbino\Casts\HashCast
+	- Varhall\Dbino\Casts\IntegerCast
+	- Varhall\Dbino\Casts\StringCast
+	- Varhall\Dbino\Casts\JsonCast

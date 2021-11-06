@@ -15,7 +15,7 @@ define('CONFIG_DIR', TESTER_DIR . '/config');
 define('FIXTURES_DIR', TESTER_DIR . '/fixtures/sql');
 
 Environment::setupRobotLoader(function($loader) {
-    $loader->addDirectory(ENGINE_DIR);
+    $loader->addDirectory(__DIR__);
     $loader->addDirectory(SRC_DIR);
     $loader->setAutoRefresh(true);
 });

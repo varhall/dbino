@@ -18,7 +18,7 @@ trait TreeNode
     public static function all(): Collection
     {
         $left = static::instance()->treeColumns()->left;
-        return Dbino::instance()->collection(static::class)->order($left);
+        return static::getRepository()->all()->order($left);
     }
 
     public static function roots()
@@ -43,7 +43,7 @@ trait TreeNode
             'select'    => $hasSoftDelete ? "AND t2.{$sdColumn} IS null" : '',
         ];
 
-        return Dbino::instance()->explorer()->query("SELECT t0.id AS id, 
+        return Dbino::_explorer()->query("SELECT t0.id AS id, 
                                 (SELECT GROUP_CONCAT(t2.{$column} ORDER BY t2.{$left} SEPARATOR '{$separator}')
                                     FROM {$table} t2 
                                     WHERE t2.{$left} <= t0.{$left} AND t2.{$right} >= t0.{$right} {$softDeletes->select}

@@ -3,7 +3,6 @@
 namespace Varhall\Dbino\Collections;
 
 use Varhall\Dbino\Configuration;
-use Varhall\Dbino\Dbino;
 use Varhall\Utilino\Collections\ICollection;
 
 /**
@@ -15,14 +14,13 @@ class GroupedCollection extends \Nette\Database\Table\GroupedSelection implement
 {
     use CollectionTrait;
     
-    public function __construct(\Nette\Database\Table\GroupedSelection $selection, Dbino $dbino, string $class)
+    public function __construct(\Nette\Database\Table\GroupedSelection $selection, string $class)
     {
         foreach (get_object_vars($selection) as $property => $value) {
             if (property_exists(self::class, $property))
                 $this->$property = &$selection->$property;
         }
-        
-        $this->dbino = $dbino;
+
         $this->class = $class;
     }
 }

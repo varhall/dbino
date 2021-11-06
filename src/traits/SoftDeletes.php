@@ -3,11 +3,23 @@
 namespace Varhall\Dbino\Traits;
 
 
+use Varhall\Dbino\Collections\Collection;
+use Varhall\Dbino\Dbino;
 use Varhall\Dbino\Events\DeleteArgs;
 use Varhall\Dbino\Events\RestoreArgs;
 
 trait SoftDeletes
 {
+    public static function withTrashed(): Collection
+    {
+        return static::getRepository()->all()->withTrashed();
+    }
+
+    public static function onlyTrashed(): Collection
+    {
+        return static::getRepository()->all()->onlyTrashed();
+    }
+
     public function delete(): int
     {
         $args = new DeleteArgs([

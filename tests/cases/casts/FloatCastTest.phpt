@@ -3,18 +3,18 @@
 namespace Tests\Cases\Casts;
 
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\FloatCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class FloatCastTest extends BaseTestCase
+class FloatCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
+        $factory = new AttributeCastFactory($this->getContainer());
 
         Assert::type(FloatCast::class, $factory->create('real'));
         Assert::type(FloatCast::class, $factory->create('float'));

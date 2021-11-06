@@ -3,18 +3,18 @@
 namespace Tests\Cases\Casts;
 
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\BooleanCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class BooleanCastTest extends BaseTestCase
+class BooleanCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
+        $factory = new AttributeCastFactory($this->getContainer());
 
         Assert::type(BooleanCast::class, $factory->create('bool'));
         Assert::type(BooleanCast::class, $factory->create('boolean'));

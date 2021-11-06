@@ -2,10 +2,14 @@
 
 namespace Varhall\Dbino\Casts;
 
+use Nette\DI\Container;
 use Nette\InvalidArgumentException;
 
 class AttributeCastFactory
 {
+    /** @var Container */
+    protected $container;
+
     protected $casts = [
         'bool'      => BooleanCast::class,
         'boolean'   => BooleanCast::class,
@@ -17,11 +21,12 @@ class AttributeCastFactory
         'number'    => FloatCast::class,
         'string'    => StringCast::class,
         'json'      => JsonCast::class,
+        'hash'      => HashCast::class
     ];
 
-    public function register($key, AttributeCast $cast): void
+    public function __construct(Container $container)
     {
-        $this->casts[$key] = $cast;
+        $this->container = $container;
     }
 
     public function create($type): AttributeCast
@@ -32,6 +37,6 @@ class AttributeCastFactory
         if (!is_subclass_of($type, AttributeCast::class))
             throw new InvalidArgumentException("Required Cast {$type} is not type of " . AttributeCast::class);
 
-        return is_string($type) ? new $type() : $type;
+        return is_string($type) ? $this->container->getByType($type) : $type;
     }
 }

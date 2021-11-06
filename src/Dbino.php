@@ -3,71 +3,58 @@
 namespace Varhall\Dbino;
 
 use Nette\Database\Explorer;
-use Nette\Database\Table\Selection;
+use Nette\DI\Container;
+use Nette\InvalidStateException;
+use Nette\NotSupportedException;
 use Varhall\Dbino\Casts\AttributeCast;
 use Varhall\Dbino\Casts\AttributeCastFactory;
-use Varhall\Dbino\Collections\Collection;
-use Varhall\Dbino\Mutators\Mutator;
-use Varhall\Dbino\Mutators\MutatorFactory;
 use Varhall\Utilino\Utils\Reflection;
 
+/**
+ * @method static Repository _repository(string $class)
+ * @method static Model _model(string $class, array $data = [])
+ * @method static string _config(string $class, string $option)
+ * @method static ?AttributeCast _cast($type)
+ * @method static Explorer _explorer()
+ */
 class Dbino
 {
-    /** @var Dbino */
-    private static $instance;
+    /** @var Container */
+    public static $container;
 
-    /** @var Explorer */
-    protected $explorer;
-
-    /** @var AttributeCastFactory */
-    protected $casts;
-
-    public function __construct(Explorer $explorer, AttributeCastFactory $casts)
+    public static function __callStatic($name, $arguments)
     {
-        $this->explorer = $explorer;
-        $this->casts = $casts;
+        $dbino = self::$container->getByType(static::class);
+        $method = preg_replace('/^_/i', '', $name);
+
+        if (preg_match('/^_/i', $name) && method_exists($dbino, $method))
+            return call_user_func_array([ $dbino, $method ], $arguments);
+
+        throw new NotSupportedException("Method " . get_class($dbino) . "::{$method} does not exist");
     }
 
-
-    /// STATIC METHODS
-
-    public static function initialize(Dbino $dbino): void
+    public function repository(string $class): Repository
     {
-        self::$instance = $dbino;
+        $repositoryClass = $this->config($class, 'repository');
+        $table = $this->config($class, 'table');
+
+        $repository = self::$container->getByType($repositoryClass, false);
+
+        if (!$repository)
+            $repository = new $repositoryClass();
+
+        if (!($repository instanceof Repository))
+            throw new InvalidStateException('Repository is not instance of ' . Repository::class);
+
+        return $repository
+            ->setTable($table)
+            ->setModel($class)
+            ->setExplorer($this->explorer());
     }
-
-    public static function instance(): Dbino
-    {
-        return self::$instance;
-    }
-
-
-    /// INSTANCE METHODS
-
-    /*public function repository(string $class): Repository
-    {
-        return new Repository($class, $this);
-    }*/
-
-    public function explorer(): Explorer
-    {
-        return $this->explorer;
-    }
-
-    public function table($name): Selection
-    {
-        return $this->explorer->table($name);
-    }
-
-    public function cast($type): AttributeCast
-    {
-        return $this->casts->create($type);
-    }
-
 
     public function model(string $class, array $data = []): Model
     {
-        $instance = new $class($this);
+        $instance = new $class();
 
         if (!empty($data))
             $instance->fill($data);
@@ -75,9 +62,18 @@ class Dbino
         return $instance;
     }
 
-    public function collection(string $class): Collection
+    public function config(string $class, string $option): string
     {
-        $table = Reflection::callPrivateMethod($this->model($class), 'table');
-        return new Collection($this->explorer->table($table), $this, $class);
+        return Reflection::callPrivateMethod($this->model($class), $option);
+    }
+
+    public function cast($type): ?AttributeCast
+    {
+        return self::$container->getByType(AttributeCastFactory::class)->create($type);
+    }
+
+    public function explorer(): Explorer
+    {
+        return self::$container->getByType(Explorer::class);
     }
 }

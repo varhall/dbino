@@ -56,4 +56,5 @@ After the model is defined you can make simple database operation based on Activ
 
 - [Models](models.md)
 - [Relations](relations.md)
+- [Queries](queries.md)
 - [Casting](casting.md)

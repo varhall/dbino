@@ -3,19 +3,18 @@
 namespace Tests\Cases\Casts;
 
 use Tester\Assert;
-use Tests\Engine\BaseTestCase;
+use Tests\Engine\ContainerTestCase;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Casts\DoubleCast;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class DoubleCastTest extends BaseTestCase
+class DoubleCastTest extends ContainerTestCase
 {
     public function testFactory()
     {
-        $factory = new AttributeCastFactory();
-
+        $factory = new AttributeCastFactory($this->getContainer());
         Assert::type(DoubleCast::class, $factory->create('double'));
     }
 

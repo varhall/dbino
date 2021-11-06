@@ -22,18 +22,19 @@ use Varhall\Utilino\Utils\Reflection;
  *
  * @author Ondrej Sibrava <sibrava@varhall.cz>
  *
+ * @method static Collection all()
+ * @method static Collection where($condition, ...$parameters)
  * @method static $this find($id)
  * @method static $this findOrDefault($id, array $data = [])
  * @method static $this findOrFail($id)
+ * @method static instance(array $data)
+ * @method static create(array $data)
  * @method static array columns()
  * @method static Collection withTrashed()
  * @method static Collection onlyTrashed()
  */
 abstract class Model extends ActiveRow implements ISerializable
 {
-    /** @var Dbino */
-    protected $dbino;
-
     /** @var array */
     protected $attributes   = [];
 
@@ -48,10 +49,8 @@ abstract class Model extends ActiveRow implements ISerializable
     /// MAGIC METHODS                                                        ///
     ////////////////////////////////////////////////////////////////////////////
 
-    public function __construct(Dbino $dbino)
+    public function __construct()
     {
-        $this->dbino = $dbino;
-
         $this->on('creating', function($args) { $this->raise('saving', $args); });
         $this->on('updating', function($args) { $this->raise('saving', $args); });
 
@@ -119,12 +118,12 @@ abstract class Model extends ActiveRow implements ISerializable
 
     public static function __callStatic($name, $arguments)
     {
-        $collection = static::all();
+        $repository = static::getRepository();
 
-        if (!method_exists($collection, $name))
-            throw new \Nette\MemberAccessException("Method {$name} not found in class " . get_class($collection));
+        if (!method_exists($repository, $name))
+            throw new \Nette\MemberAccessException("Method {$name} not found in class " . get_class($repository));
 
-        return call_user_func_array([ $collection, $name ], $arguments);
+        return call_user_func_array([ $repository, $name ], $arguments);
     }
 
 
@@ -133,35 +132,11 @@ abstract class Model extends ActiveRow implements ISerializable
     /// STATIC METHODS                                                       ///
     ////////////////////////////////////////////////////////////////////////////
 
-    /** @return static */
-    public static function instance(array $data = [])
+    public static function getRepository(): Repository
     {
-        return Dbino::instance()->model(static::class, $data);
+        return Dbino::_repository(static::class);
     }
-
-    /** @return static */
-    public static function create(array $data)
-    {
-        return static::instance($data)->save();
-    }
-
-    // Collection creation
-
-    public static function all(): Collection
-    {
-        return Dbino::instance()->collection(static::class);
-    }
-
-    /**
-     * @param $condition
-     * @param mixed ...$parameters
-     * @return Collection
-     */
-    public static function where($condition, ...$parameters)
-    {
-        return call_user_func_array([self::all(), 'where'], func_get_args());
-    }
-
+    
     public static function search(Selection $collection, $value, array $args = [])
     {
         $columns = static::instance()->searchedColumns();
@@ -191,6 +166,11 @@ abstract class Model extends ActiveRow implements ISerializable
     ////////////////////////////////////////////////////////////////////////////
 
     protected abstract function table();
+
+    protected function repository(): string
+    {
+        return Repository::class;
+    }
 
     protected function setup()
     {
@@ -361,7 +341,7 @@ abstract class Model extends ActiveRow implements ISerializable
         ]));
 
         // insert
-        $model = $this->dbino->collection(static::class)->insert($this->prepareDbData($this->attributes));
+        $model = static::getRepository()->all()->insert($this->prepareDbData($this->attributes));
         Reflection::writePrivateProperty($this, 'data', Reflection::readPrivateProperty($model, 'data'));
         Reflection::writePrivateProperty($this, 'table', Reflection::readPrivateProperty($model, 'table'));
 
@@ -402,10 +382,10 @@ abstract class Model extends ActiveRow implements ISerializable
 
     protected function hasMany($class, $throughColumn = null)
     {
-        $table = $this->dbino->collection($class)->getName();
+        $table = Dbino::_config($class, 'table');
         $related = $this->related($table, $throughColumn);
 
-        return new GroupedCollection($related, $this->dbino, $class);
+        return new GroupedCollection($related, $class);
     }
 
     protected function hasOne($class, $throughColumn = null)
@@ -415,17 +395,17 @@ abstract class Model extends ActiveRow implements ISerializable
 
     protected function belongsTo($class, $throughColumn = null)
     {
-        $collection = $this->dbino->collection($class);
+        $table = Dbino::_config($class, 'table');
 
         if ($this->isNew())
-            return $collection->find($this->$throughColumn);
+            return Dbino::_repository($class)->all()->get($this->$throughColumn);
 
-        $ref = $this->ref($collection->getName(), $throughColumn);
+        $ref = $this->ref($table, $throughColumn);
 
         if (!$ref)
             return null;
 
-        $instance = $this->dbino->model($class);
+        $instance = Dbino::_model($class);
 
         Reflection::writePrivateProperty($instance, 'data', Reflection::readPrivateProperty($ref, 'data'));
         Reflection::writePrivateProperty($instance, 'table', Reflection::readPrivateProperty($ref, 'table'));
@@ -435,10 +415,10 @@ abstract class Model extends ActiveRow implements ISerializable
 
     protected function belongsToMany($class, $intermediateTable, $foreignColumn, $referenceColumn)
     {
-        $collection = $this->dbino->collection($class);
+        $table = Dbino::_config($class, 'table');
 
         $intermediate = $this->related($intermediateTable, $foreignColumn);
-        return new ManyToManyCollection($intermediate, $intermediateTable, $collection->getName(), $foreignColumn, $referenceColumn, $this->getPrimary(), $this->dbino, $class);
+        return new ManyToManyCollection($intermediate, $intermediateTable, $table, $foreignColumn, $referenceColumn, $this->getPrimary(), $class);
     }
 
     protected function registerPlugins()
@@ -561,7 +541,7 @@ abstract class Model extends ActiveRow implements ISerializable
 
     protected function getCast($field): ?AttributeCast
     {
-        return isset($this->casts[$field]) ? $this->dbino->cast($this->casts[$field]) : null;
+        return isset($this->casts[$field]) ? Dbino::_cast($this->casts[$field]) : null;
     }
 
     protected function prepareDbData(array $data)

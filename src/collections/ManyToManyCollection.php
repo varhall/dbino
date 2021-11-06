@@ -5,7 +5,6 @@ namespace Varhall\Dbino\Collections;
 
 use Nette\NotImplementedException;
 use Varhall\Dbino\Configuration;
-use Varhall\Dbino\Dbino;
 use Varhall\Dbino\Repository;
 
 class ManyToManyCollection extends GroupedCollection
@@ -70,10 +69,9 @@ class ManyToManyCollection extends GroupedCollection
 
     public function __construct(\Nette\Database\Table\GroupedSelection $selection,
                                 $intermediateTable, $referencedTable, $foreignColumn, $referenceColumn, $foreignValue,
-                                Dbino $dbino,
                                 string $class)
     {
-        parent::__construct($selection, $dbino, $class);
+        parent::__construct($selection, $class);
 
         $this->intermediateTable = $intermediateTable;
         $this->referencedTable = $referencedTable;

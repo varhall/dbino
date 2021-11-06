@@ -2,7 +2,7 @@
 
 namespace Tests\Cases\Traits;
 
-use Nette\NotSupportedException;
+use Nette\MemberAccessException;
 use Tester\Assert;
 use Tests\Engine\DatabaseTestCase;
 use Varhall\Dbino\Tests\Models\Author;
@@ -72,8 +72,15 @@ class SoftDeletesTest extends DatabaseTestCase
         ];
 
         Assert::equal($expected, Tag::all()->toArray());
-        Assert::equal($expected, Tag::withTrashed()->toArray());
-        Assert::equal($expected, Tag::onlyTrashed()->toArray());
+
+        Assert::exception(function() {
+            Tag::withTrashed()->toArray();
+        }, MemberAccessException::class);
+
+        Assert::exception(function() {
+            Tag::onlyTrashed()->toArray();
+        }, MemberAccessException::class);
+
     }
 }
 

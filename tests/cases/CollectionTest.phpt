@@ -20,7 +20,7 @@ class CollectionTest extends DatabaseTestCase
     {
         parent::setUp();
 
-        $this->collection = Dbino::instance()->collection(Book::class);
+        $this->collection = $this->dbino->repository(Book::class)->all();
     }
 
     public function testCreateModel()
