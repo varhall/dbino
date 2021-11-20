@@ -1,8 +1,5 @@
 services:
-	dbino:
-		factory: Varhall\Dbino\Dbino
-		setup:
-			- Varhall\Dbino\Dbino::$container = @container
+	- Varhall\Dbino\Dbino
 
 	repository:
 		factory: Varhall\Dbino\Repository

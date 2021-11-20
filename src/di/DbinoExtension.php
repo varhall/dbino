@@ -13,5 +13,7 @@ class DbinoExtension extends CompilerExtension
         $this->compiler->loadDefinitionsFromConfig(
             $this->loadFromFile(__DIR__ . '/dbino.neon')['services'],
         );
+
+        $this->initialization->addBody('\Varhall\Dbino\Dbino::$container = $this;');
     }
 }
