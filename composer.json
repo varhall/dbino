@@ -16,21 +16,21 @@
 	},
 
 	"require": {
-		"php": ">=7.4.0",
-		"nette/utils": "^3.2.0",
-		"nette/database": "^3.0.7",
-		"nette/di": "^3.0.6",
-		"nette/security": "^v3.1.4",
+		"php": ">=7.4",
+		"nette/utils": "^3.2",
+		"nette/database": "^3.0",
+		"nette/di": "^3.0",
+		"nette/security": "^v3.1",
 		"varhall/utilino": "^1.1"
 	},
 
 	"require-dev": {
-		"ninjify/nunjuck": "^0.3.0",
+		"ninjify/nunjuck": "^0.3",
 		"ninjify/qa": "^0.12",
-		"mockery/mockery": "^1.4.3",
+		"mockery/mockery": "^1.4",
 		"nette/bootstrap": "^3.1",
-		"nette/robot-loader": "v3.4.1",
-		"nette/http": "^v3.1.3"
+		"nette/robot-loader": "v3.4",
+		"nette/http": "^v3.1"
 	},
 
 	"autoload": {
