@@ -137,7 +137,7 @@ jobs:
     runs-on: "${{ matrix.operating-system }}"
 
     env:
-      DATABASE_HOST: database
+      DATABASE_HOST: localhost
       DATABASE_USER: root
       DATABASE_PASSWORD: test
       DATABASE_NAME: test
@@ -162,6 +162,8 @@ jobs:
     services:
       database:
         image: mariadb:latest
+        ports:
+          - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: 'test'
         options: >-
