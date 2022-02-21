@@ -10,27 +10,24 @@ use Varhall\Utilino\Utils\JsonObject;
 
 class JsonCast extends AttributeCast
 {
-    const OPTIONS_SERIALIZER    = 'serializer';
-    const OPTIONS_NULLABLE      = 'nullable';
-    const OPTIONS_PRIMITIVE     = 'primitive';
+    const NULLABLE      = 'nullable';
+    const PRIMITIVE     = 'primitive';
 
-    public $serializer  = null;
     public $nullable    = false;
     public $primitive   = false;
-    public $defaults    = [];
 
 
-    public function __construct($defaults = [], $options = [])
+    public function __construct(...$options)
     {
-        foreach ($options as $property => $value) {
-            $this->$property = $value;
+        foreach ([ self::NULLABLE, self::PRIMITIVE ] as $option) {
+            $this->$option = in_array($option, $options);
         }
-
-        $this->defaults = $defaults;
     }
 
-    public function get(Model $model, $property, $value)
+    public function get(Model $model, $property, $value, $args)
     {
+        $defaults = $args['defaults'] ?? [];
+
         if ($this->nullable && $value === null)
             return $value;
 
@@ -42,7 +39,7 @@ class JsonCast extends AttributeCast
                 $value = $value->toArray();
 
             return is_array($value) || !$this->primitive
-                ? new JsonObject(array_merge($this->defaults, (array) $value))
+                ? new JsonObject(array_merge((array) $defaults, (array) $value))
                 : $value;
 
         } catch (JsonException $ex) {
@@ -55,9 +52,6 @@ class JsonCast extends AttributeCast
 
     public function set(Model $model, $property, $value)
     {
-        if ($this->serializer && is_callable($this->serializer))
-            $value = call_user_func($this->serializer, $value);
-
         return $value || !$this->nullable ? Json::encode($value ?? []) : null;
     }
 }

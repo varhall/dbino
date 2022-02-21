@@ -20,10 +20,10 @@ class DoubleCastTest extends ContainerTestCase
 
     public function testGet()
     {
-        $Cast = new DoubleCast();
+        $cast = new DoubleCast();
 
-        Assert::equal(5.0, $Cast->get(\Mockery::mock(Model::class), null, '5'));
-        Assert::equal(5.3, $Cast->get(\Mockery::mock(Model::class), null, '5.3'));
+        Assert::equal(5.0 , $cast->get(\Mockery::mock(Model::class), null, '5', []));
+        Assert::equal(5.3, $cast->get(\Mockery::mock(Model::class), null, '5.3', []));
     }
 }
 

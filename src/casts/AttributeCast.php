@@ -6,7 +6,7 @@ use Varhall\Dbino\Model;
 
 abstract class AttributeCast
 {
-    public function get(Model $model, $property, $value)
+    public function get(Model $model, $property, $value, $args)
     {
         return $value;
     }

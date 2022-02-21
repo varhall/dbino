@@ -4,4 +4,4 @@ output
 /*.log
 /coverage.html
 /coverage.xml
-/config
+#/config

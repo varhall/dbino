@@ -7,7 +7,7 @@ use Varhall\Dbino\Model;
 
 class IntegerCast extends AttributeCast
 {
-    public function get(Model $model, $property, $value)
+    public function get(Model $model, $property, $value, $args)
     {
         return intval($value);
     }

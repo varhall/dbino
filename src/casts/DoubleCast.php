@@ -7,7 +7,7 @@ use Varhall\Dbino\Model;
 
 class DoubleCast extends AttributeCast
 {
-    public function get(Model $model, $property, $value)
+    public function get(Model $model, $property, $value, $args)
     {
         return doubleval($value);
     }

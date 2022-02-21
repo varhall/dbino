@@ -33,6 +33,10 @@ trait TestContainer
         //$configurator->addConfig(__DIR__ . '/../app/config/config.neon');
         $configurator->addConfig(CONFIG_DIR . '/tests.neon');
 
+        $configurator->addDynamicParameters([
+            'env' => getenv(),
+        ]);
+
         return $configurator->createContainer();
     }
 

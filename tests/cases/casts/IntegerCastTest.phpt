@@ -24,7 +24,7 @@ class IntegerCastTest extends ContainerTestCase
     {
         $Cast = new IntegerCast();
 
-        Assert::equal(5, $Cast->get(\Mockery::mock(Model::class), null, '5'));
+        Assert::equal(5, $Cast->get(\Mockery::mock(Model::class), null, '5', []));
     }
 }
 

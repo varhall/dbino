@@ -36,9 +36,10 @@ class AttributesTest extends DatabaseTestCase
         ];
 
         $expected = Product::create([
-            'name'      => 'test',
-            'published' => true,
-            'info'      => $info
+            'name'          => 'test',
+            'availability'  => 'stocked',
+            'published'     => true,
+            'info'          => $info
         ]);
 
         Assert::equal($expected->toArray(), Product::find($expected->id)->toArray());
@@ -59,9 +60,10 @@ class AttributesTest extends DatabaseTestCase
         ];
 
         $product = Product::instance([
-            'name'      => 'test',
-            'published' => true,
-            'info'      => $info
+            'name'          => 'test',
+            'availability'  => 'stocked',
+            'published'     => true,
+            'info'          => $info
         ]);
 
         Assert::equal($info, $product->info->toArray());
@@ -81,8 +83,31 @@ class AttributesTest extends DatabaseTestCase
             'warranty'      => 24
         ];
 
+        Assert::equal('unknown', Product::instance()->availability);
         Assert::true(Product::instance()->published);
         Assert::equal($defaults, Product::instance()->info->toArray());
+    }
+
+    public function testJsonDefaultsEmpty()
+    {
+        $expected = [
+            'condition'     => 'new',
+            'identifier'    => '',
+            'warranty'      => 24
+        ];
+
+        Assert::equal($expected, Product::find(4)->info->toArray());
+    }
+
+    public function testJsonDefaultsPartial()
+    {
+        $expected = [
+            'condition'     => 'used',
+            'identifier'    => '',
+            'warranty'      => 24
+        ];
+
+        Assert::equal($expected, Product::find(5)->info->toArray());
     }
 }
 

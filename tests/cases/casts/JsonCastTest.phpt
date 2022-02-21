@@ -27,25 +27,25 @@ class JsonCastTest extends ContainerTestCase
             'surname'   => 'Hellmann',
             'age'       => 53
         ];
-        $Cast = new JsonCast();
+        $cast = new JsonCast();
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, Json::encode($expected));
+        $result = $cast->get(\Mockery::mock(Model::class), null, Json::encode($expected), null);
         Assert::equal($expected, $result->toArray());
     }
 
     public function testGetRequiredNull()
     {
-        $Cast = new JsonCast([]);
+        $cast = new JsonCast();
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, null);
+        $result = $cast->get(\Mockery::mock(Model::class), null, null, null);
         Assert::equal([], $result->toArray());
     }
 
     public function testGetNullableNull()
     {
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_NULLABLE => true ]);
+        $cast = new JsonCast(JsonCast::NULLABLE);
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, null);
+        $result = $cast->get(\Mockery::mock(Model::class), null, null, null);
         Assert::null($result);
     }
 
@@ -59,17 +59,17 @@ class JsonCastTest extends ContainerTestCase
             'age'       => 53
         ];
 
-        $Cast = new JsonCast($defaults);
+        $cast = new JsonCast();
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, Json::encode($data));
+        $result = $cast->get(\Mockery::mock(Model::class), null, Json::encode($data), [ 'defaults' => $defaults ]);
         Assert::equal(array_merge($defaults, $data), $result->toArray());
     }
 
     public function testGetPrimitiveValue()
     {
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_PRIMITIVE => true ]);
+        $cast = new JsonCast(JsonCast::PRIMITIVE);
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, '5');
+        $result = $cast->get(\Mockery::mock(Model::class), null, '5', null);
         Assert::equal(5, $result);
     }
 
@@ -81,9 +81,9 @@ class JsonCastTest extends ContainerTestCase
             'age'       => 53
         ];
 
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_PRIMITIVE => true ]);
+        $cast = new JsonCast(JsonCast::PRIMITIVE);
 
-        $result = $Cast->get(\Mockery::mock(Model::class), null, Json::encode($expected));
+        $result = $cast->get(\Mockery::mock(Model::class), null, Json::encode($expected), null);
         Assert::equal($expected, $result->toArray());
     }
 
@@ -94,47 +94,47 @@ class JsonCastTest extends ContainerTestCase
             'surname'   => 'Hellmann',
             'age'       => 53
         ];
-        $Cast = new JsonCast();
+        $cast = new JsonCast();
 
-        $result = $Cast->set(\Mockery::mock(Model::class), null, $data);
+        $result = $cast->set(\Mockery::mock(Model::class), null, $data);
         Assert::equal(Json::encode($data), $result);
     }
 
     public function testSetRequiredNull()
     {
-        $Cast = new JsonCast([]);
+        $cast = new JsonCast();
 
-        $result = $Cast->set(\Mockery::mock(Model::class), null, null);
+        $result = $cast->set(\Mockery::mock(Model::class), null, null);
         Assert::equal(Json::encode([]), $result);
     }
 
     public function testSetNullableNull()
     {
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_NULLABLE => true ]);
+        $cast = new JsonCast(JsonCast::NULLABLE);
 
-        $result = $Cast->set(\Mockery::mock(Model::class), null, null);
+        $result = $cast->set(\Mockery::mock(Model::class), null, null);
         Assert::null($result);
     }
 
     public function testSetPrimitiveValue()
     {
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_PRIMITIVE => true ]);
+        $cast = new JsonCast(JsonCast::PRIMITIVE);
 
-        $result = $Cast->set(\Mockery::mock(Model::class), null, 5);
+        $result = $cast->set(\Mockery::mock(Model::class), null, 5);
         Assert::equal(Json::encode(5), $result);
     }
 
-    public function testSerializer()
+    /*public function testSerializer()
     {
         $serializer = function($value) {
             return array_flip($value);
         };
 
-        $Cast = new JsonCast([], [ JsonCast::OPTIONS_SERIALIZER => $serializer ]);
+        $cast = new JsonCast([ JsonCast::OPTIONS_SERIALIZER => $serializer ]);
 
-        $result = $Cast->set(\Mockery::mock(Model::class), null, [ 'key' => 'value' ]);
+        $result = $cast->set(\Mockery::mock(Model::class), null, [ 'key' => 'value' ]);
         Assert::equal(Json::encode([ 'value' => 'key' ]), $result);
-    }
+    }*/
 }
 
 (new JsonCastTest())->run();

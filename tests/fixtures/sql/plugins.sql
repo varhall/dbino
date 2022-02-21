@@ -49,12 +49,15 @@ DROP TABLE IF EXISTS `products`;
 CREATE TABLE `products` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `name` varchar(20) NOT NULL,
+    `availability` varchar(20) NOT NULL,
     `published` TINYINT NOT NULL,
     `info` text NOT NULL,
     PRIMARY KEY (`id`)
 );
 
-INSERT INTO `products` (`id`, `name`, `published`, `info`) VALUES
-(1,	'iPhone 12', 1, '{"condition":"new","identifier":"IP12","warranty":24}'),
-(2,	'Macbook Air', 1, '{"condition":"new","identifier":"MA2021","warranty":24}'),
-(3,	'Samsung Galaxy S20', 0, '{"condition":"used","identifier":"SG20","warranty":24}');
+INSERT INTO `products` (`id`, `name`, `availability`, `published`, `info`) VALUES
+(1,	'iPhone 12', 'stocked', 1, '{"condition":"new","identifier":"IP12","warranty":24}'),
+(2,	'Macbook Air', 'stocked', 1, '{"condition":"new","identifier":"MA2021","warranty":24}'),
+(3,	'Samsung Galaxy S20', 'stocked', 0, '{"condition":"used","identifier":"SG20","warranty":24}'),
+(4,	'Samsung Galaxy S20 FE', 'unknown', 0, '[]'),
+(5,	'Samsung Galaxy S20 SE', 'unknown', 0, '{"condition": "used"}');

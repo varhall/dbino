@@ -22,13 +22,13 @@ class BooleanCastTest extends ContainerTestCase
 
     public function testGet()
     {
-        $Cast = new BooleanCast();
+        $cast = new BooleanCast();
 
-        Assert::true($Cast->get(\Mockery::mock(Model::class), null, 1));
-        Assert::true($Cast->get(\Mockery::mock(Model::class), null, '1'));
+        Assert::true($cast->get(\Mockery::mock(Model::class), null, 1, []));
+        Assert::true($cast->get(\Mockery::mock(Model::class), null, '1', []));
 
-        Assert::false($Cast->get(\Mockery::mock(Model::class), null, 0));
-        Assert::false($Cast->get(\Mockery::mock(Model::class), null, '0'));
+        Assert::false($cast->get(\Mockery::mock(Model::class), null, 0, []));
+        Assert::false($cast->get(\Mockery::mock(Model::class), null, '0', []));
     }
 }
 

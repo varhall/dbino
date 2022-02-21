@@ -1,16 +1,6 @@
 services:
 	- Varhall\Dbino\Dbino
-
-	repository:
+	- Varhall\Dbino\Casts\AttributeCastFactory
+	-
 		factory: Varhall\Dbino\Repository
 		autowired: false
-
-	# casts
-	- Varhall\Dbino\Casts\AttributeCastFactory
-	- Varhall\Dbino\Casts\BooleanCast
-	- Varhall\Dbino\Casts\DoubleCast
-	- Varhall\Dbino\Casts\FloatCast
-	- Varhall\Dbino\Casts\HashCast
-	- Varhall\Dbino\Casts\IntegerCast
-	- Varhall\Dbino\Casts\StringCast
-	- Varhall\Dbino\Casts\JsonCast

@@ -463,10 +463,6 @@ abstract class Model extends ActiveRow implements ISerializable
             $value = parent::__get($key);
         }
 
-        // get default value
-        if ($value === null && array_key_exists($key, $this->defaults()))
-            $value = $this->defaults()[$key];
-
         return $this->readField($key, $value);
     }
 
@@ -497,7 +493,10 @@ abstract class Model extends ActiveRow implements ISerializable
     {
         $cast = $this->getCast($key);
 
-        return $cast ? $cast->get($this, $key, $value) : $value;
+        $defaults = array_key_exists($key, $this->defaults()) ? $this->defaults()[$key] : null;
+        $value = $value ?? $defaults;
+
+        return $cast ? $cast->get($this, $key, $value, [ 'defaults' => $defaults ]) : $value;
     }
 
     protected function toCamelCase($input)

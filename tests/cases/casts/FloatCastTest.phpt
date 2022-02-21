@@ -25,8 +25,8 @@ class FloatCastTest extends ContainerTestCase
     {
         $Cast = new FloatCast();
 
-        Assert::equal(5.0, $Cast->get(\Mockery::mock(Model::class), null, '5'));
-        Assert::equal(5.3, $Cast->get(\Mockery::mock(Model::class), null, '5.3'));
+        Assert::equal(5.0, $Cast->get(\Mockery::mock(Model::class), null, '5', []));
+        Assert::equal(5.3, $Cast->get(\Mockery::mock(Model::class), null, '5.3', []));
     }
 }
 

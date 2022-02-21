@@ -216,33 +216,62 @@ Once you have defined a custom cast type, you may attach it to a model attribute
 
     namespace App\Models;
 
-    use App\Casts\Json;
+    use App\Casts\JsonCast;
     use Varhall\Dbino\Model;
 
     class User extends Model
     {
         protected $casts = [
-            'options' => Json::class,
+            'options' => JsonCast::class,
         ];
     }
 
-In some cases instance can be passed as cast attribute.
+Some casts can be shortened using table and code below:
+
+| Cast      | Class               |
+| ----------|---------------------|
+| bool      | BooleanCast::class  |
+| boolean   | BooleanCast::class  |
+| int       | IntegerCast::class  |
+| integer   | IntegerCast::class  |
+| double    | DoubleCast::class   |
+| float     | FloatCast::class    |
+| real      | FloatCast::class    |
+| number    | FloatCast::class    |
+| string    | StringCast::class   |
+| json      | JsonCast::class     |
+| hash      | HashCast::class     |
 
     <?php
 
     namespace App\Models;
 
-    use App\Casts\Json;
+    use App\Casts\JsonCast;
     use Varhall\Dbino\Model;
 
     class User extends Model
     {
         protected $casts = [
-            'options' => new Json()
+            'options' => 'json',
         ];
     }
 
-> TODO: implement factory functions
+`AttributeCast` also can some arguments. These can be passed using ":" and separated by ",". Or another option is to define them in array. All these arguments are passed as constructor arguments to `AttributeCast` class
+
+    <?php
+
+    namespace App\Models;
+
+    use App\Casts\JsonCast;
+    use Varhall\Dbino\Model;
+
+    class User extends Model
+    {
+        protected $casts = [
+            'options' => 'json:nullable,primitive',
+            'info'    => [ 'json', 'nullabel', 'primitive' ]
+        ];
+    }
 
 <a name="array-json-serialization"></a>
 ### Array / JSON Serialization

@@ -19,8 +19,9 @@ class Product extends \Varhall\Dbino\Model
     protected function defaults()
     {
         return [
-            'published' => true,
-            'info'      => [
+            'availability'  => 'unknown',
+            'published'     => true,
+            'info'          => [
                 'condition'     => 'new',
                 'identifier'    => '',
                 'warranty'      => 24

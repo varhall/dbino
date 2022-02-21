@@ -23,8 +23,8 @@ class StringCastTest extends ContainerTestCase
     {
         $Cast = new StringCast();
 
-        Assert::equal('5', $Cast->get(\Mockery::mock(Model::class), null, 5));
-        Assert::equal('5.3', $Cast->get(\Mockery::mock(Model::class), null, 5.3));
+        Assert::equal('5', $Cast->get(\Mockery::mock(Model::class), null, 5, []));
+        Assert::equal('5.3', $Cast->get(\Mockery::mock(Model::class), null, 5.3, []));
     }
 }
 
