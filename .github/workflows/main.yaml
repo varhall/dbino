@@ -136,12 +136,6 @@ jobs:
     name: "Tests"
     runs-on: "${{ matrix.operating-system }}"
 
-    env:
-      DATABASE_HOST: localhost
-      DATABASE_USER: root
-      DATABASE_PASSWORD: test
-      DATABASE_NAME: test
-
     strategy:
       matrix:
         php-version: [ "8.0", "8.1" ]
@@ -220,6 +214,11 @@ jobs:
 
       - name: "Tests"
         run: "make tests"
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_USER: root
+          DATABASE_PASSWORD: test
+          DATABASE_NAME: test
 
   tests-code-coverage:
     name: "Tests with code coverage"
@@ -291,6 +290,11 @@ jobs:
 
       - name: "Tests"
         run: "make coverage-clover"
+        env:
+          DATABASE_HOST: localhost
+          DATABASE_USER: root
+          DATABASE_PASSWORD: test
+          DATABASE_NAME: test
 
       - name: "Coveralls.io"
         env:

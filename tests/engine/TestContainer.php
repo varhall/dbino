@@ -36,7 +36,6 @@ trait TestContainer
         $configurator->addDynamicParameters([
             'env' => getenv(),
         ]);
-        var_dump(getenv());
 
         return $configurator->createContainer();
     }
