@@ -160,6 +160,7 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: 'test'
+          MYSQL_DATABASE: 'test'
         options: >-
           --health-cmd="mysqladmin ping"
           --health-interval=10s
@@ -237,6 +238,7 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: 'test'
+          MYSQL_DATABASE: 'test'
         options: >-
           --health-cmd="mysqladmin ping"
           --health-interval=10s
