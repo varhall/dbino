@@ -216,10 +216,9 @@ jobs:
       - name: "Tests"
         run: "make tests"
         env:
-          DATABASE_HOST: localhost
-          DATABASE_USER: root
-          DATABASE_PASSWORD: test
-          DATABASE_NAME: test
+          DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
+          DATABASE_USER: 'root'
+          DATABASE_PASSWORD: 'test'
 
   tests-code-coverage:
     name: "Tests with code coverage"
@@ -293,10 +292,9 @@ jobs:
       - name: "Tests"
         run: "make coverage-clover"
         env:
-          DATABASE_HOST: localhost
-          DATABASE_USER: root
-          DATABASE_PASSWORD: test
-          DATABASE_NAME: test
+          DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
+          DATABASE_USER: 'root'
+          DATABASE_PASSWORD: 'test'
 
       - name: "Coveralls.io"
         env:

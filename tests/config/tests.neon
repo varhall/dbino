@@ -2,7 +2,7 @@ parameters:
 
 
 database:
-	dsn: 'mysql:host=%env.DATABASE_HOST%;dbname=%env.DATABASE_NAME%'
+	dsn: %env.DATABASE_DSN%
 	user: %env.DATABASE_USER%
 	password: %env.DATABASE_PASSWORD%
 
