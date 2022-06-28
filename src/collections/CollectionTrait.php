@@ -380,7 +380,7 @@ trait CollectionTrait
 
     public function search($value, callable $func = null)
     {
-        $func = $func !== null ? $func : [$this->model, 'search'];
+        $func = $func !== null ? $func : [$this->class, 'search'];
 
         return call_user_func($func, $this, $value);
     }
