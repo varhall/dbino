@@ -158,6 +158,17 @@ class CollectionTest extends DatabaseTestCase
         }));
     }
 
+    public function testChunk()
+    {
+        $i = 0;
+        $this->collection->chunk(2, function($data, $index) use (&$i) {
+            Assert::equal($i, $index);
+            Assert::equal([ $i + 1, $i + 2 ], $data->toArray());
+
+            $i++;
+        });
+    }
+
 }
 
 (new CollectionTest())->run();

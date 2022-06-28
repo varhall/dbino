@@ -215,6 +215,26 @@ trait CollectionTrait
     }
 
     /**
+     * Runs the function for chunks of given size
+     *
+     * @param int $size Chunk size
+     * @param callable $func Function
+     * @return ICollection
+     */
+    protected function chunk(int $size, callable $func)
+    {
+        $total = (clone $this)->count('*');
+
+        for ($i = 0; $i < ceil($total / $size); $i++) {
+            $chunk = (clone $this)->limit($size, $i * $size);
+
+            call_user_func($func, $chunk, $i);
+        }
+
+        return $this;
+    }
+
+    /**
      * true if collection is empty
      *
      * @return boolean
