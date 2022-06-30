@@ -160,10 +160,16 @@ class CollectionTest extends DatabaseTestCase
 
     public function testChunk()
     {
+        $chunks = [
+            [ 1, 2 ],
+            [ 3, 4 ],
+            [ 5 ],
+        ];
+
         $i = 0;
-        $this->collection->chunk(2, function($data, $index) use (&$i) {
+        $this->collection->chunk(2, function($data, $index) use (&$i, $chunks) {
             Assert::equal($i, $index);
-            Assert::equal([ $i + 1, $i + 2 ], $data->toArray());
+            Assert::equal($chunks[$i], $data->map(function($item) { return $item->id; })->toArray());
 
             $i++;
         });
