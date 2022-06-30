@@ -221,7 +221,7 @@ trait CollectionTrait
      * @param callable $func Function
      * @return ICollection
      */
-    protected function chunk(int $size, callable $func)
+    public function chunk(int $size, callable $func)
     {
         $total = (clone $this)->count('*');
 
