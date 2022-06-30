@@ -24,6 +24,9 @@
   - [Restoring Soft Deleted Models](#restoring-soft-deleted-models)
 - [Duplicating Models](#duplicating-models)
 - [Events](#events)
+  - [Model Events](#model-events)
+  - [Repository Events](#repository-events)
+  - [Custom Events](#custom-events)
 
 <a name="model-definition"></a>
 ## Model Definition
@@ -515,6 +518,11 @@ Dbino models dispatch several events, allowing you to hook into the following mo
 
 When a new model is saved for the first time, the `creating` and `created` events will dispatch. The `updating` / `updated` events will dispatch when an existing model is modified and the `save` method is called. The `saving` / `saved` events will dispatch when a model is created or updated - even if the model's attributes have not been changed.
 
+Events can be handled on both Model and Repository classes.
+
+<a name="model-events"></a>
+### Model Events
+
 To start listening to model events, register event handler using on method. This handler is bound to current instance only. But using setup method it can be registered globally.
 
     namespace App\Models;
@@ -534,5 +542,60 @@ To start listening to model events, register event handler using on method. This
         protected function table()
         {
             return 'authors';
+        }
+    }
+
+<a name="repository-events"></a>
+### Repository events
+
+For some cases Repository events can be very useful. The main reason for Repository events to be used is possibility to call methods on DI services.
+
+All of the default triggered events are exactly the same as with Model Events.
+
+    namespace App\Repositories;
+
+    use Varhall\Dbino\Repository;
+    use Varhall\Dbino\Events\UpdateArgs;
+
+    class AuthorsRepository extends Repository
+    {
+        protected $rabbit;
+
+        public function __construct(RabbitMQ $rabbit)
+        {
+            $this->rabbit = $rabbit;
+
+            // Raise RabbitMQ event anytime the Author is updated
+
+            $this->on('updated', function(UpdateArgs $args) {
+                $this->rabbit->push('authors', $args->instance->toArray());
+            });
+        }
+    }
+
+<a name="custom-events"></a>
+### Custom events
+
+The predefined events are not the only one. You can raise and handle any event you want. The usage is same for Model and Repository events.
+
+    namespace App\Repositories;
+
+    use Varhall\Dbino\Repository;
+    use Varhall\Dbino\Events\UpdateArgs;
+
+    class AuthorsRepository extends Repository
+    {
+        public function __construct()
+        {
+            $this->on('custom_event', function($args) {
+                // ...
+            });
+        }
+
+        public function findByCategory($category)
+        {
+            // ...
+
+            $this->raise('custom_event', $category);
         }
     }
