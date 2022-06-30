@@ -17,6 +17,9 @@ class Repository
     /** @var Explorer */
     protected $explorer;
 
+    /** @var array */
+    protected $events       = [];
+
 
     /// GETTERS & SETTERS
 
@@ -51,6 +54,11 @@ class Repository
     {
         $this->explorer = $explorer;
         return $this;
+    }
+
+    public function getEvents(): array
+    {
+        return $this->events;
     }
 
 
@@ -133,5 +141,10 @@ class Repository
         return array_map(function($column) {
             return $column['name'];
         }, $columns);
+    }
+
+    public function on($event, callable $callback): void
+    {
+        $this->events[$event][] = $callback;
     }
 }

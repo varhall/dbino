@@ -9,6 +9,15 @@ use Varhall\Dbino\Tests\Models\Book;
 
 class BooksRepository extends Repository
 {
+    public static $eventsInjection = [];
+
+    public function __construct()
+    {
+        foreach (static::$eventsInjection as $event => $func) {
+            $this->on($event, $func);
+        }
+    }
+
     public function findAvailable(): Collection
     {
         return Book::all()->where('available', true);

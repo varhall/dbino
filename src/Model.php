@@ -527,10 +527,12 @@ abstract class Model extends ActiveRow implements ISerializable
 
     protected function raise($event, ...$args)
     {
-        if (!isset($this->events[$event]))
+        $events = array_merge_recursive($this->events, static::getRepository()->getEvents());
+
+        if (!isset($events[$event]))
             return;
 
-        foreach ($this->events[$event] as $handler) {
+        foreach ($events[$event] as $handler) {
             if (!is_callable($handler))
                 continue;
 
