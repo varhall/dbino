@@ -72,7 +72,13 @@ trait CollectionTrait
             $this->where("{$this->softDeleteColumn()} {$negative}", null);
         }
 
+        $backup = $this->data;
+
         parent::execute();
+
+        if ($backup) {
+            $this->resync($backup);
+        }
     }
 
     protected function createRow(array $row): ActiveRow
@@ -108,6 +114,22 @@ trait CollectionTrait
         Reflection::writePrivateProperty($instance, 'table', $table);
 
         return $instance;
+    }
+
+    protected function resync(array $backup): void
+    {
+        foreach ($this->rows as $row) {
+            $signature = $row->getSignature();
+
+            if (!$signature || !array_key_exists($signature, $backup))
+                continue;
+
+            $original = $backup[$signature];
+            Reflection::writePrivateProperty($original, 'data', Reflection::readPrivateProperty($row, 'data'));
+
+            $this->rows[$signature] = $original;
+            $this->data[$signature] = $original;
+        }
     }
 
     public function isSoftDeletable(): bool
