@@ -10,7 +10,7 @@
   - [Has Many Through](#has-many-through)
   - [Key Conventions](#has-many-key-conventions)
 - [Many To Many Relationships](#many-to-many)
-  - [Defining The Inverse of The Relationship](#Defining The Inverse of The Relationship)
+  - [Defining The Inverse of The Relationship](#many-to-many-defining-the-inverse-of-the-relationship)
 
 
 <a name="introduction"></a>
