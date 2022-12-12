@@ -44,6 +44,9 @@ abstract class Model extends ActiveRow implements ISerializable
     /** @var array */
     protected $casts        = [];
 
+    /** @var array */
+    protected $filters      = [];
+
 
     ////////////////////////////////////////////////////////////////////////////
     /// MAGIC METHODS                                                        ///
@@ -136,7 +139,7 @@ abstract class Model extends ActiveRow implements ISerializable
     {
         return Dbino::_repository(static::class);
     }
-    
+
     public static function search(Selection $collection, $value, array $args = [])
     {
         $columns = static::instance()->searchedColumns();
@@ -205,6 +208,11 @@ abstract class Model extends ActiveRow implements ISerializable
     protected function searchedColumns()
     {
         return [];
+    }
+
+    protected function collectionFilters()
+    {
+        return $this->filters;
     }
 
 

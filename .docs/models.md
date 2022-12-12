@@ -23,6 +23,7 @@
   - [Permanently Deleting Models](#permanently-deleting-models)
   - [Restoring Soft Deleted Models](#restoring-soft-deleted-models)
 - [Duplicating Models](#duplicating-models)
+- [Scopes](#scopes)
 - [Events](#events)
   - [Model Events](#model-events)
   - [Repository Events](#repository-events)
@@ -510,6 +511,47 @@ Values can be automatically prefilled or excluded from created clone.
     ]);
 
     $clone = $author->duplicate([ 'name' => 'Johann' ], [ 'enabled' ]);
+
+<a name="scopes"></a>
+## Scopes
+
+Sometimes you have data in a table but these data should not available only in some views. As example
+we can use `Post` where some posts belongs to some tenants. You can simple narrow the results manually
+using `where` condition, but with `Scope` trait is the manipulation much easier.
+
+    namespace App\Models;
+
+    use Varhall\Dbino\Model;
+    use Varhall\Dbino\Traits\Scope;
+
+    class Post extends Model
+    {
+        use Scope;
+
+        protected function scopeDefinition(): array
+        {
+            return [
+                'customer_id' => 1
+            ];
+        }
+
+        protected function table()
+        {
+            return 'posts';
+        }
+    }
+
+Querying the table, result will be only Posts having column `customer_id = 1`.
+
+Since the scope is defined, columns are also set automatically. This means that
+
+    Post::create([ 'title' => 'Awesome post' ])
+
+fills automatically `customer_id` set to 1.
+
+> {note} Scope columns use events. Notice that these events are not triggered in some cases, especially
+> within mass operations.
+
 
 <a name="events"></a>
 ## Events

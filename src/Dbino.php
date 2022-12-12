@@ -13,7 +13,7 @@ use Varhall\Utilino\Utils\Reflection;
 /**
  * @method static Repository _repository(string $class)
  * @method static Model _model(string $class, array $data = [])
- * @method static string _config(string $class, string $option)
+ * @method static mixed _config(string $class, string $option)
  * @method static ?AttributeCast _cast($type)
  * @method static Explorer _explorer()
  */
@@ -62,7 +62,7 @@ class Dbino
         return $instance;
     }
 
-    public function config(string $class, string $option): string
+    public function config(string $class, string $option): mixed
     {
         return Reflection::callPrivateMethod($this->model($class), $option);
     }

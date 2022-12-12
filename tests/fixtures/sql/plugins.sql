@@ -61,3 +61,19 @@ INSERT INTO `products` (`id`, `name`, `availability`, `published`, `info`) VALUE
 (3,	'Samsung Galaxy S20', 'stocked', 0, '{"condition":"used","identifier":"SG20","warranty":24}'),
 (4,	'Samsung Galaxy S20 FE', 'unknown', 0, '[]'),
 (5,	'Samsung Galaxy S20 SE', 'unknown', 0, '{"condition": "used"}');
+
+
+DROP TABLE IF EXISTS `posts`;
+CREATE TABLE `posts` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `customer_id` int(11) NOT NULL,
+    `title` varchar(50) NOT NULL,
+    PRIMARY KEY (`id`)
+);
+
+INSERT INTO `posts` (`id`, `customer_id`, `title`) VALUES
+    (1, 1, 'Hello world'),
+    (2, 1, 'Good morning world'),
+    (3, 2, 'Foreign message'),
+    (4, 1, 'Bye world'),
+    (5, 2, 'Private message');

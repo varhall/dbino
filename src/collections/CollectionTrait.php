@@ -72,6 +72,13 @@ trait CollectionTrait
             $this->where("{$this->softDeleteColumn()} {$negative}", null);
         }
 
+        $filters = Dbino::_config($this->class, 'collectionFilters');
+        foreach ($filters as $filter) {
+            if (is_callable($filter)) {
+                call_user_func($filter, $this);
+            }
+        }
+
         $backup = $this->data;
 
         parent::execute();
