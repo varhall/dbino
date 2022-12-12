@@ -2,8 +2,8 @@
 
 namespace Varhall\Dbino\Traits;
 
+use Nette\Database\Table\Selection;
 use Nette\InvalidStateException;
-use Varhall\Dbino\Collections\Collection;
 use Varhall\Dbino\Events\SaveArgs;
 
 trait Scope
@@ -34,7 +34,7 @@ trait Scope
 
         // register filter functions
 
-        $this->filters[] = function(Collection $collection) {
+        $this->filters[] = function(Selection $collection) {
             $definition = $this->scopeDefinition();
 
             foreach ($definition as $column => $value) {
