@@ -36,7 +36,7 @@ trait SoftDeletes
 
         $this->raise('deleted',  $args);
 
-        return $this->getPrimary();
+        return 1;
     }
 
     public function forceDelete(): int
