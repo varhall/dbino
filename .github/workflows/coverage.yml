@@ -18,10 +18,9 @@ env:
 jobs:
   build:
     name: "Coverage"
-    steps:
-      - uses: contributte/.github/.github/workflows/nette-tester-coverage.yml@v1
-        with:
-          php: "8.2"
+    uses: contributte/.github/.github/workflows/nette-tester-coverage.yml@v1
+    with:
+      php: "8.2"
 
     env:
       DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'

@@ -22,6 +22,10 @@ jobs:
       matrix:
         version: [ "8.2", "8.1", "8.0" ]
 
+    uses: contributte/.github/.github/workflows/nette-tester.yml@v1
+    with:
+      php: ${{ matrix.version }}
+
     services:
       database:
         image: mariadb:latest
@@ -41,8 +45,4 @@ jobs:
       DATABASE_USER: 'root'
       DATABASE_PASSWORD: 'test'
 
-    steps:
-      - uses: contributte/.github/.github/workflows/nette-tester.yml@v1
-        with:
-          php: ${{ matrix.version }}
 
