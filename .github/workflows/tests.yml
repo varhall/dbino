@@ -1,30 +1,24 @@
-name: "Nette Tester"
+name: "build"
 
 on:
   pull_request:
-
+    paths-ignore:
+      - ".docs/**"
   push:
-    branches: ["*"]
-
+    branches:
+      - "*"
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: "0 8 * * 1" # At 08:00 on Monday
 
 env:
   extensions: "json, pdo_mysql"
-  cache-version: "1"
-  composer-version: "v2"
-  composer-install: "composer update --no-interaction --no-progress --no-suggest --prefer-dist --prefer-stable"
-
 
 jobs:
   tests:
+    name: "Tests"
     strategy:
       matrix:
-        version: [ "8.2", "8.1", "8.0" ]
-
-    uses: contributte/.github/.github/workflows/nette-tester.yml@v1
-    with:
-      php: ${{ matrix.version }}
+        php: [ "8.2", "8.1", "8.0" ]
 
     services:
       database:
@@ -40,9 +34,25 @@ jobs:
           --health-timeout=5s
           --health-retries=3
 
-    env:
-      DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
-      DATABASE_USER: 'root'
-      DATABASE_PASSWORD: 'test'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: "${{ env.extensions }}"
 
+      - run: composer install --no-progress --prefer-dist
+
+      - run: make tests
+        shell: bash
+        env:
+          DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
+          DATABASE_USER: 'root'
+          DATABASE_PASSWORD: 'test'
+
+      - if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: output
+          path: tests/**/output
 
