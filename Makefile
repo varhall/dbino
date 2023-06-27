@@ -20,6 +20,9 @@ tests:
 tests-watch:
 	vendor/bin/tester -s -p php --colors 1 -C tests/cases -w tests -w src
 
+coverage:
+	vendor/bin/tester -s -p phpdbg --colors 1 -C --coverage ./coverage.xml --coverage-src ./src tests/cases
+
 coverage-clover:
 	vendor/bin/tester -s -p phpdbg --colors 1 -C --coverage ./coverage.xml --coverage-src ./src tests/cases
 
