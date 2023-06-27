@@ -16,9 +16,11 @@ env:
 jobs:
   tests:
     name: "Tests"
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         php: [ "8.2", "8.1", "8.0" ]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     services:
       database:
