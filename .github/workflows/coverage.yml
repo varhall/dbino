@@ -24,17 +24,17 @@ jobs:
 
     services:
       database:
-        image: mariadb:latest
+        image: mariadb:10
         ports:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: 'test'
           MYSQL_DATABASE: 'test'
-#        options: >-
-#          --health-cmd="mysqladmin ping"
-#          --health-interval=10s
-#          --health-timeout=5s
-#          --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - uses: actions/checkout@v3
