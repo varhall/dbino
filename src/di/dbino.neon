@@ -3,4 +3,4 @@ services:
 	- Varhall\Dbino\Casts\AttributeCastFactory
 	-
 		factory: Varhall\Dbino\Repository
-		autowired: false
+		autowired: self
