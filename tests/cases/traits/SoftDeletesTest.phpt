@@ -82,6 +82,15 @@ class SoftDeletesTest extends DatabaseTestCase
         }, MemberAccessException::class);
 
     }
+
+    public function testIsTrashed()
+    {
+        $author = Author::find(1);
+        Assert::false($author->isTrashed());
+
+        $author->delete();
+        Assert::true($author->isTrashed());
+    }
 }
 
 (new SoftDeletesTest())->run();

@@ -15,10 +15,11 @@ phpstan:
 	vendor/bin/phpstan analyse -l max -c phpstan.neon src
 
 tests:
-	vendor/bin/tester -s -p php --colors 1 -C tests/cases
+	vendor/bin/tester -s -p php --colors 1 -C tests/cases/$(FILE)
+	# example make tests FILE=model/RepositoryTest.phpt
 
 tests-watch:
-	vendor/bin/tester -s -p php --colors 1 -C tests/cases -w tests -w src
+	vendor/bin/tester -s -p php --colors 1 -C tests/cases/$(FILE) -w tests -w src
 
 coverage:
 	vendor/bin/tester -s -p phpdbg --colors 1 -C --coverage ./coverage.xml --coverage-src ./src tests/cases

@@ -2,6 +2,7 @@
 
 namespace Tests\Cases\Model;
 
+use Nette\InvalidStateException;
 use Tester\Assert;
 use Tester\Expect;
 use Tester\TestCase;
@@ -56,6 +57,15 @@ class ModificationsTest extends DatabaseTestCase
         Assert::null(Tag::find(1));
     }
 
+    public function testDelete_unsaved()
+    {
+        $tag = Tag::instance([]);
+
+        Assert::exception(function() use ($tag) {
+            $tag->delete();
+        }, InvalidStateException::class);
+    }
+
     public function testSaveInsert()
     {
         Author::instance([
@@ -90,6 +100,13 @@ class ModificationsTest extends DatabaseTestCase
         Assert::equal($expected, $result);
     }
 
+    public function testSave_unsaved()
+    {
+        $author = Author::instance([]);
+
+        Assert::same($author, $author->save());
+    }
+
     public function testDuplicateEmpty()
     {
         $expected = [
@@ -122,6 +139,15 @@ class ModificationsTest extends DatabaseTestCase
 
         $clone = Author::find(1)->duplicate([ 'name' => 'Johann', 'surname' => 'Schmied' ]);
         Assert::equal($expected, $clone->toArray());
+    }
+
+    public function testDuplicate_unsaved()
+    {
+        $author = Author::instance([]);
+
+        Assert::exception(function() use ($author) {
+            $author->duplicate();
+        }, InvalidStateException::class);
     }
 }
 

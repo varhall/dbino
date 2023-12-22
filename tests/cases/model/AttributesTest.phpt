@@ -109,6 +109,22 @@ class AttributesTest extends DatabaseTestCase
 
         Assert::equal($expected, Product::find(5)->info->toArray());
     }
+
+    public function testIsset_saved()
+    {
+        $product = Product::find(1);
+
+        Assert::true(isset($product->name));
+        Assert::false(isset($product->unknown));
+    }
+
+    public function testIsset_unsaved()
+    {
+        $product = Product::instance([ 'name' => 'Markus' ]);
+
+        Assert::true(isset($product->name));
+        Assert::false(isset($product->unknown));
+    }
 }
 
 (new AttributesTest())->run();

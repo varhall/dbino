@@ -8,7 +8,6 @@ use Nette\InvalidStateException;
 use Nette\NotSupportedException;
 use Varhall\Dbino\Casts\AttributeCast;
 use Varhall\Dbino\Casts\AttributeCastFactory;
-use Varhall\Utilino\Utils\Reflection;
 
 /**
  * @method static Repository _repository(string $class)
@@ -27,44 +26,41 @@ class Dbino
         $dbino = self::$container->getByType(static::class);
         $method = preg_replace('/^_/i', '', $name);
 
-        if (preg_match('/^_/i', $name) && method_exists($dbino, $method))
-            return call_user_func_array([ $dbino, $method ], $arguments);
+        if (preg_match('/^_/i', $name) && method_exists($dbino, $method)) {
+            return call_user_func_array([$dbino, $method], $arguments);
+        }
 
         throw new NotSupportedException("Method " . get_class($dbino) . "::{$method} does not exist");
     }
 
-    public function repository(string $class): Repository
+    public function repository(string $model): Repository
     {
-        $repositoryClass = $this->config($class, 'repository');
-        $table = $this->config($class, 'table');
+        if (!is_subclass_of($model, Model::class)) {
+            throw new InvalidStateException('Class ' . $model . ' is not subclass of ' . Model::class);
+        }
 
-        $repository = self::$container->getByType($repositoryClass, false);
+        $config = $model::configuration();
+        $repository = self::$container->getByType($config->repository, false) ?? new ($config->repository)();
 
-        if (!$repository)
-            $repository = new $repositoryClass();
-
-        if (!($repository instanceof Repository))
+        if (!($repository instanceof Repository)) {
             throw new InvalidStateException('Repository is not instance of ' . Repository::class);
+        }
 
-        return $repository
-            ->setTable($table)
-            ->setModel($class)
-            ->setExplorer($this->explorer());
+        $repository->setConfiguration($config)->setExplorer($this->explorer());
+        $repository->setup();
+
+        return $repository;
     }
 
     public function model(string $class, array $data = []): Model
     {
         $instance = new $class();
 
-        if (!empty($data))
+        if (!empty($data)) {
             $instance->fill($data);
+        }
 
         return $instance;
-    }
-
-    public function config(string $class, string $option): mixed
-    {
-        return Reflection::callPrivateMethod($this->model($class), $option);
     }
 
     public function cast($type): ?AttributeCast

@@ -40,6 +40,19 @@ class RepositoryTest extends DatabaseTestCase
 
         Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
     }
+
+    public function testFindMultiple()
+    {
+        $data = Book::find([1, 2, 3]);
+
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Einfach JavaScript',
+        ];
+
+        Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
+    }
 }
 
 (new RepositoryTest())->run();

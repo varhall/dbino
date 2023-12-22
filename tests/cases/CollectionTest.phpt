@@ -8,6 +8,7 @@ use Tests\Engine\DatabaseTestCase;
 use Varhall\Dbino\Collections\Collection;
 use Varhall\Dbino\Dbino;
 use Varhall\Dbino\Tests\Models\Book;
+use Varhall\Utilino\Collections\ArrayCollection;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -114,10 +115,13 @@ class CollectionTest extends DatabaseTestCase
             'Oracle',
         ];
 
-        $data = $this->collection->whereAvailable(true);
+        $data = $this->collection->available(true);
 
         Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
     }
+
+
+    // ICollection methods
 
     public function testEach()
     {
@@ -158,6 +162,55 @@ class CollectionTest extends DatabaseTestCase
         }));
     }
 
+    public function testFilter()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'Oracle',
+        ];
+
+        $result = $this->collection->filter(function($item) {
+            return $item->price === 50.0;
+        })->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testFilterKeys()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'Einfach JavaScript',
+            'Oracle',
+        ];
+
+        $result = $this->collection->filterKeys(function($key) {
+            return $key % 2 === 0;
+        })->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testFirst()
+    {
+        Assert::equal(1, $this->collection->first()->id);
+    }
+
+    public function testFlatten()
+    {
+        $expected = [
+            1, 2, 3, 4, 5
+        ];
+
+        $result = $this->collection->map(fn($x) => [ $x->id ])->flatten();
+
+        Assert::equal($expected, $result->toArray());
+    }
+
     public function testChunk()
     {
         $chunks = [
@@ -174,6 +227,264 @@ class CollectionTest extends DatabaseTestCase
             $i++;
         });
     }
+
+    public function testIsEmpty()
+    {
+        Assert::false($this->collection->isEmpty());
+        Assert::true($this->collection->where('id', 100)->isEmpty());
+    }
+
+    public function testKeys()
+    {
+        Assert::equal([ 1, 2, 3, 4, 5 ], $this->collection->keys()->toArray());
+    }
+
+
+
+    public function testClone()
+    {
+        $collection = $this->collection->where('id', 1);
+        $cloned = clone $collection;
+
+        Assert::equal($collection->count(), $cloned->count());
+        Assert::equal($collection->toArray(), $cloned->toArray());
+    }
+
+    // generate test methods for all ICollection methods of Collection class
+    public function testCount()
+    {
+        Assert::equal(5, $this->collection->count());
+    }
+
+    public function testLast()
+    {
+        Assert::equal(5, $this->collection->last()->id);
+    }
+
+    public function testMap()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Einfach JavaScript',
+            'Web programming',
+            'Oracle',
+            //'Death Code'
+        ];
+
+        $result = $this->collection->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testMerge()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Einfach JavaScript',
+            'Web programming',
+            'Oracle',
+            //'Death Code'
+        ];
+
+        $result = $this->collection->merge($this->collection)->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal([...$expected, ...$expected], $result->toArray());
+    }
+
+    public function testPad()
+    {
+        $expected = [
+            1, 2, 3, 4, 5, 666, 666, 666, 666, 666
+        ];
+
+        $result = $this->collection->pad(10, (object) [ 'id' => 666 ])->map(fn($x) => $x->id);
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testPipe()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+        ];
+
+        $result = $this->collection->pipe(function($collection) {
+            return $collection->where('id', [ 1, 2 ]);
+        })->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testPop()
+    {
+        $last = $this->collection->pop();
+        Assert::equal('Oracle', $last->title);
+    }
+
+    public function testPrepend()
+    {
+        $expected = [
+            'Death Code',
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Einfach JavaScript',
+            'Web programming',
+            'Oracle',
+        ];
+
+        $result = $this->collection->prepend(Book::instance([ 'title' => 'Death Code' ]))->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testPush()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Einfach JavaScript',
+            'Web programming',
+            'Oracle',
+            'Death Code',
+        ];
+
+        $result = $this->collection->push(Book::instance([ 'title' => 'Death Code' ]))->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testReduce()
+    {
+        $expected = 220.0;
+
+        $result = $this->collection->reduce(function($carry, $item) {
+            return $carry + $item->price;
+        }, 0);
+
+        Assert::equal($expected, $result);
+    }
+
+    public function testReverse()
+    {
+        $expected = [
+            'Oracle',
+            'Web programming',
+            'Einfach JavaScript',
+            'MySQL Queries',
+            'PHP Tips & Tricks',
+        ];
+
+        $result = $this->collection->reverse()->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testShift()
+    {
+        $first = $this->collection->shift();
+        Assert::equal('PHP Tips & Tricks', $first->title);
+    }
+
+    public function testSort()
+    {
+        $expected = [
+            'Einfach JavaScript',
+            'MySQL Queries',
+            'Oracle',
+            'PHP Tips & Tricks',
+            'Web programming',
+            //'Death Code'
+        ];
+
+        $result = $this->collection->sort(function($a, $b) {
+            return $a->title <=> $b->title;
+        })->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
+
+    public function testValues()
+    {
+        Assert::equal([ 1, 2, 3, 4, 5 ], $this->collection->values()->map(function($item) { return $item->id; })->toArray());
+    }
+
+
+
+
+    public function testOffsetExists()
+    {
+        Assert::true(isset($this->collection[1]));
+        Assert::false(isset($this->collection[100]));
+    }
+
+    public function testOffsetGet()
+    {
+        Assert::equal(1, $this->collection[1]->id);
+        Assert::equal(2, $this->collection[2]->id);
+        Assert::equal(3, $this->collection[3]->id);
+        Assert::equal(4, $this->collection[4]->id);
+        Assert::equal(5, $this->collection[5]->id);
+    }
+
+    public function testOffsetSet()
+    {
+        Assert::throws(fn() => $this->collection[1] = Book::instance([ 'title' => 'Death Code' ]), \Nette\NotSupportedException::class);
+    }
+
+    public function testOffsetUnset()
+    {
+        unset($this->collection[1]);
+        Assert::equal(4, $this->collection->count());
+    }
+
+
+
+
+
+
+
+
+
+    public function testGetIterator()
+    {
+        $i = 0;
+        foreach ($this->collection as $item) {
+            Assert::equal($i + 1, $item->id);
+            $i++;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

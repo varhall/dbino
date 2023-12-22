@@ -12,8 +12,8 @@ trait Timestamps
     protected function timestampsColumns()
     {
         return [
-            'created' => defined('static::CREATED_AT') ? static::CREATED_AT : 'created_at',
-            'updated' => defined('static::UPDATED_AT') ? static::UPDATED_AT : 'updated_at'
+            'created' => 'created_at',
+            'updated' => 'updated_at'
         ];
     }
 

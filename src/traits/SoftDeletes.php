@@ -4,20 +4,28 @@ namespace Varhall\Dbino\Traits;
 
 
 use Varhall\Dbino\Collections\Collection;
-use Varhall\Dbino\Dbino;
 use Varhall\Dbino\Events\DeleteArgs;
 use Varhall\Dbino\Events\RestoreArgs;
+use Varhall\Dbino\Scopes\ColumnScope;
 
 trait SoftDeletes
 {
+    protected string $softDeleteColumn = 'deleted_at';
+
     public static function withTrashed(): Collection
     {
-        return static::getRepository()->all()->withTrashed();
+        return static::withoutScope('soft-delete');
     }
 
     public static function onlyTrashed(): Collection
     {
-        return static::getRepository()->all()->onlyTrashed();
+        $instance = new static();
+        return static::withTrashed()->where($instance->softDeleteColumn . ' NOT', null);
+    }
+
+    protected function initializeSoftDeletes()
+    {
+        $this->addScope(new ColumnScope($this->softDeleteColumn, null), 'soft-delete');
     }
 
     public function delete(): int
@@ -31,7 +39,7 @@ trait SoftDeletes
         $this->raise('deleting', $args);
 
         $this->update([
-            $this->softDeleteColumn() => new \Nette\Utils\DateTime()
+            $this->softDeleteColumn => new \Nette\Utils\DateTime()
         ]);
 
         $this->raise('deleted',  $args);
@@ -54,7 +62,7 @@ trait SoftDeletes
         $this->raise('restoring', $args);
 
         $this->update([
-            $this->softDeleteColumn() => NULL
+            $this->softDeleteColumn => null
         ]);
 
         $this->raise('restored', $args);
@@ -64,11 +72,6 @@ trait SoftDeletes
 
     public function isTrashed()
     {
-        return $this->{$this->softDeleteColumn()} !== null;
-    }
-
-    protected function softDeleteColumn()
-    {
-        return 'deleted_at';
+        return $this->{$this->softDeleteColumn} !== null;
     }
 }

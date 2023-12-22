@@ -5,45 +5,18 @@ namespace Varhall\Dbino;
 use Nette\Database\Explorer;
 use Nette\InvalidArgumentException;
 use Varhall\Dbino\Collections\Collection;
+use Varhall\Dbino\Traits\Events;
 
 class Repository
 {
-    /** @var string */
-    protected $table;
-    
-    /** @var string */
-    protected $model;
+    use Events;
 
-    /** @var Explorer */
-    protected $explorer;
+    protected Explorer $explorer;
 
-    /** @var array */
-    protected $events       = [];
+    protected Configuration $configuration;
 
 
     /// GETTERS & SETTERS
-
-    public function getTable(): string
-    {
-        return $this->table;
-    }
-    
-    public function setTable(string $table): self
-    {
-        $this->table = $table;
-        return $this;
-    }
-    
-    public function getModel(): string
-    {
-        return $this->model;
-    }
-
-    public function setModel(string $model): self
-    {
-        $this->model = $model;
-        return $this;
-    }
 
     public function getExplorer(): Explorer
     {
@@ -56,17 +29,51 @@ class Repository
         return $this;
     }
 
+    public function getConfiguration(): Configuration
+    {
+        return $this->configuration;
+    }
+
+    public function setConfiguration(Configuration $configuration): self
+    {
+        $this->configuration = $configuration;
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     */
     public function getEvents(): array
     {
         return $this->events;
     }
 
+    public function setup(): void
+    {
+
+    }
 
     /// PUBLIC METHODS
     
     public function all(): Collection
     {
-        return new Collection($this->explorer->table($this->table), $this->model);
+        $collection = new Collection($this->explorer->table($this->configuration->table), $this->configuration->model);
+
+        // conditional where
+        $collection->on('call', function(Collection $collection, string $method, array $arguments) {
+            $this->conditionalWhere($collection, $method, $arguments);
+        });
+
+        // dynamic where
+        $collection->on('call', function(Collection $collection, string $method, array $arguments) {
+            $this->dynamicWhere($collection, $method, $arguments);
+        });
+
+        foreach ($this->configuration->scopes as $scope) {
+            $scope->filter($collection);
+        }
+
+        return $collection;
     }
 
     public function where($condition, ...$parameters): Collection
@@ -74,10 +81,17 @@ class Repository
         return call_user_func_array([$this->all(), 'where'], func_get_args());
     }
 
-    public function find($id): ?Model
+    public function withoutScope(string|array $name): Collection
     {
-        if (is_array($id))
+        $this->configuration->scopes = array_filter($this->configuration->scopes, fn($key) => !in_array($key, (array) $name), ARRAY_FILTER_USE_KEY);
+        return static::all();
+    }
+
+    public function find($id): Model|Collection|null
+    {
+        if (is_array($id)) {
             return $this->all()->wherePrimary($id);
+        }
 
         return $this->all()->get($id);
     }
@@ -86,8 +100,9 @@ class Repository
     {
         $item = $this->find($id);
 
-        if (!$item)
+        if (!$item) {
             throw new InvalidArgumentException('Object not found');
+        }
 
         return $item;
     }
@@ -102,31 +117,10 @@ class Repository
         }
     }
 
-    public function search(Selection $collection, $value, array $args = [])
-    {
-        $columns = Dbino::_config($this->class, 'searchedColumns');
-
-        if (empty($columns))
-            return $collection;
-
-        $query = [];
-        $params = [];
-        foreach ($columns as $column) {
-            $query[] = "{$column} LIKE ?";
-            $params[] = "%{$value}%";
-        }
-
-        if (!empty($args)) {
-            call_user_func_array('array_push', array_merge([&$query], array_keys($args)));
-            call_user_func_array('array_push', array_merge([&$params], array_values($args)));
-        }
-
-        return $collection->whereOr(array_combine($query, $params));
-    }
-
     public function instance(array $data = []): Model
     {
-        return Dbino::_model($this->model, $data);
+        $model = new ($this->configuration->model)();
+        return $model->fill($data);
     }
 
     public function create(array $data = []): Model
@@ -136,15 +130,31 @@ class Repository
 
     public function columns(): array
     {
-        $columns = $this->explorer->getConnection()->getDriver()->getColumns($this->table);
-
-        return array_map(function($column) {
-            return $column['name'];
-        }, $columns);
+        $columns = $this->explorer->getConnection()->getDriver()->getColumns($this->configuration->table);
+        return array_map(fn($column) => $column['name'], $columns);
     }
 
-    public function on($event, callable $callback): void
+
+    protected function conditionalWhere(Collection $collection, string $method, array $arguments): void
     {
-        $this->events[$event][] = $callback;
+        if (!preg_match('/If$/i', $method)) {
+            return;
+        }
+
+        if (!array_shift($arguments)) {
+            return;
+        }
+
+        $method = preg_replace('/If$/i', '', $method);
+        call_user_func_array([ $collection, $method ], $arguments);
+    }
+
+    protected function dynamicWhere(Collection $collection, string $method, array $arguments): void
+    {
+        $method = 'where' . ucfirst(strtolower($method));
+
+        if (method_exists($this, $method)) {
+            call_user_func_array([ $this, $method ], [ $collection, ...$arguments ]);
+        }
     }
 }

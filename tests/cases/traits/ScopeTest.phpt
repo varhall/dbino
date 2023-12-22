@@ -49,6 +49,23 @@ class ScopeTest extends DatabaseTestCase
 
         Assert::equal(1, $post->customer_id);
     }
+
+    public function testUnscoped()
+    {
+        $expected = [
+            'Hello world',
+            'Good morning world',
+            'Foreign message',
+            'Bye world',
+            'Private message',
+        ];
+
+        $result = Post::unscoped('customer_id')->map(function($item) {
+            return $item->title;
+        });
+
+        Assert::equal($expected, $result->toArray());
+    }
 }
 
 (new ScopeTest())->run();

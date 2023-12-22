@@ -20,3 +20,16 @@ Environment::setupRobotLoader(function($loader) {
     $loader->setAutoRefresh(true);
 });
 
+function dump(...$args)
+{
+    foreach ($args as $arg) {
+        var_dump($arg);
+    }
+}
+
+function dumpe(...$args)
+{
+    dump(...$args);
+    \Tester\Assert::fail('Dump variable');
+    die();
+}
