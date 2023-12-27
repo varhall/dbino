@@ -65,7 +65,6 @@ abstract class Model implements ISerializable
         $this->on('updated', function($args) { $this->raise('saved', $args); });
 
         $this->initializeTraits();
-        $this->registerPlugins();
         $this->setup();
     }
 
@@ -162,11 +161,6 @@ abstract class Model implements ISerializable
     protected function setup()
     {
 
-    }
-
-    protected function plugins()
-    {
-        return [];
     }
 
     protected function defaults()
@@ -416,13 +410,6 @@ abstract class Model implements ISerializable
         $result = new ManyToManySelection($intermediate, $intermediateTable, $configuration->table, $foreignColumn, $referenceColumn, $this->row->getPrimary());
 
         return new GroupedCollection($result, $configuration);
-    }
-
-    protected function registerPlugins(): void
-    {
-        foreach ($this->plugins() as $plugin) {
-            $plugin->register($this);
-        }
     }
 
     protected function addCast(string $field, AttributeCast $cast): void

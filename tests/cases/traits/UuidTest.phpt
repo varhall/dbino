@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Cases\Plugins;
+namespace Tests\Cases\Traits;
 
 use Tester\Assert;
 use Tests\Engine\DatabaseTestCase;
@@ -8,7 +8,7 @@ use Varhall\Dbino\Tests\Models\Visitor;
 
 require_once __DIR__ . '/../../bootstrap.php';
 
-class UuidPluginTest extends DatabaseTestCase
+class UuidTest extends DatabaseTestCase
 {
     public function testCreate()
     {
@@ -19,4 +19,4 @@ class UuidPluginTest extends DatabaseTestCase
     }
 }
 
-(new UuidPluginTest())->run();
+(new UuidTest())->run();
