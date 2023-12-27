@@ -57,7 +57,7 @@ class Repository
     
     public function all(): Collection
     {
-        $collection = new Collection($this->explorer->table($this->configuration->table), $this->configuration->model);
+        $collection = new Collection($this->explorer->table($this->configuration->table), $this->configuration);
 
         // conditional where
         $collection->on('call', function(Collection $collection, string $method, array $arguments) {
@@ -119,7 +119,7 @@ class Repository
 
     public function instance(array $data = []): Model
     {
-        $model = new ($this->configuration->model)();
+        $model = new ($this->configuration->model)($this->configuration->getDbino());
         return $model->fill($data);
     }
 

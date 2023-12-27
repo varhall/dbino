@@ -5,33 +5,35 @@ namespace Varhall\Dbino;
 use Nette\Database\Explorer;
 use Nette\DI\Container;
 use Nette\InvalidStateException;
-use Nette\NotSupportedException;
 use Varhall\Dbino\Casts\AttributeCast;
 use Varhall\Dbino\Casts\AttributeCastFactory;
 
-/**
- * @method static Repository _repository(string $class)
- * @method static Model _model(string $class, array $data = [])
- * @method static mixed _config(string $class, string $option)
- * @method static ?AttributeCast _cast($type)
- * @method static Explorer _explorer()
- */
 class Dbino
 {
-    /** @var Container */
-    public static $container;
+    private static Container $_container;
 
-    public static function __callStatic($name, $arguments)
+    private Container $container;
+
+    public function __construct(Container $container)
     {
-        $dbino = self::$container->getByType(static::class);
-        $method = preg_replace('/^_/i', '', $name);
-
-        if (preg_match('/^_/i', $name) && method_exists($dbino, $method)) {
-            return call_user_func_array([$dbino, $method], $arguments);
-        }
-
-        throw new NotSupportedException("Method " . get_class($dbino) . "::{$method} does not exist");
+        $this->container = $container;
     }
+
+
+    /// STATIC METHODS
+
+    public static function initialize(Container $container): void
+    {
+        self::$_container = $container;
+    }
+
+    public static function instance(): self
+    {
+        return new static(static::$_container);
+    }
+
+
+    /// PUBLIC METHODS
 
     public function repository(string $model): Repository
     {
@@ -40,7 +42,7 @@ class Dbino
         }
 
         $config = $model::configuration();
-        $repository = self::$container->getByType($config->repository, false) ?? new ($config->repository)();
+        $repository = $this->container->getByType($config->repository, false) ?? new ($config->repository)();
 
         if (!($repository instanceof Repository)) {
             throw new InvalidStateException('Repository is not instance of ' . Repository::class);
@@ -52,24 +54,13 @@ class Dbino
         return $repository;
     }
 
-    public function model(string $class, array $data = []): Model
-    {
-        $instance = new $class();
-
-        if (!empty($data)) {
-            $instance->fill($data);
-        }
-
-        return $instance;
-    }
-
     public function cast($type): ?AttributeCast
     {
-        return self::$container->getByType(AttributeCastFactory::class)->create($type);
+        return $this->container->getByType(AttributeCastFactory::class)->create($type);
     }
 
     public function explorer(): Explorer
     {
-        return self::$container->getByType(Explorer::class);
+        return $this->container->getByType(Explorer::class);
     }
 }

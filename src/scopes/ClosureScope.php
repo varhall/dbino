@@ -13,8 +13,8 @@ class ClosureScope implements Scope
         $this->filter = $filter;
     }
 
-    public function filter(Collection $selection): void
+    public function filter(Collection $collection): void
     {
-        ($this->filter)($selection);
+        ($this->filter)($collection);
     }
 }

@@ -15,8 +15,8 @@ class ColumnScope implements Scope
         $this->value = $value;
     }
 
-    public function filter(Collection $selection): void
+    public function filter(Collection $collection): void
     {
-        $selection->where($this->column, $this->value);
+        $collection->where($this->column, $this->value);
     }
 }

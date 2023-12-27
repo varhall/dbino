@@ -26,8 +26,8 @@ use Varhall\Utilino\Utils\Reflection;
  * @method static $this find($id)
  * @method static $this findOrDefault($id, array $data = [])
  * @method static $this findOrFail($id)
- * @method static instance(array $data)
- * @method static create(array $data)
+ * @method static instance(array $data = [])
+ * @method static create(array $data = [])
  * @method static array columns()
  * @method static Collection withTrashed()
  * @method static Collection onlyTrashed()
@@ -37,6 +37,8 @@ abstract class Model implements ISerializable
     use Events {
         raise as private raise_Events;
     }
+
+    private Dbino $dbino;
 
     private ?ActiveRow $row;
 
@@ -51,8 +53,9 @@ abstract class Model implements ISerializable
     /// MAGIC METHODS                                                        ///
     ////////////////////////////////////////////////////////////////////////////
 
-    public function __construct(?ActiveRow $row = null)
+    public function __construct(Dbino $dbino, ?ActiveRow $row = null)
     {
+        $this->dbino = $dbino;
         $this->row = $row;
 
         $this->on('creating', function($args) { $this->raise('saving', $args); });
@@ -124,7 +127,7 @@ abstract class Model implements ISerializable
 
     public static function __callStatic(string $name, array $arguments): mixed
     {
-        $repository = static::getRepository();
+        $repository = static::configuration()->getRepository();
 
         if (!method_exists($repository, $name)) {
             throw new \Nette\MemberAccessException("Method {$name} not found in class " . get_class($repository));
@@ -138,24 +141,10 @@ abstract class Model implements ISerializable
     ////////////////////////////////////////////////////////////////////////////
     /// STATIC METHODS                                                       ///
     ////////////////////////////////////////////////////////////////////////////
-
-    public static function getRepository(): Repository
-    {
-        return Dbino::_repository(static::class);
-    }
-
+    
     public static function configuration(): Configuration
     {
-        $instance = new static();
-
-        return new Configuration([
-            'model'         => static::class,
-            'table'         => $instance->table(),
-            'repository'    => $instance->repository(),
-            'casts'         => $instance->casts,
-            'scopes'        => $instance->scopes,
-            'events'        => $instance->events,
-        ]);
+        return (new static(Dbino::instance()))->getConfiguration();
     }
 
 
@@ -341,7 +330,7 @@ abstract class Model implements ISerializable
         ]));
 
         // insert
-        $model = static::getRepository()->all()->insert($this->prepareDbData($this->attributes));
+        $model = $this->getConfiguration()->getRepository()->all()->insert($this->prepareDbData($this->attributes));
 
         if ($model instanceof Model) {
             $this->row = $model->row;
@@ -387,7 +376,7 @@ abstract class Model implements ISerializable
         $configuration = $class::configuration();
         $related = $this->row->related($configuration->table, $throughColumn);
 
-        return new GroupedCollection($related, $class, $configuration->scopes);
+        return new GroupedCollection($related, $configuration);
     }
 
     protected function hasOne(string $class, ?string $throughColumn = null): Model
@@ -397,19 +386,18 @@ abstract class Model implements ISerializable
 
     protected function belongsTo(string $class, ?string $throughColumn = null): ?Model
     {
-        $table = $class::configuration()->table;
-
         if ($this->isNew()) {
-            return Dbino::_repository($class)->all()->get($this->$throughColumn);
+            return $this->dbino->repository($class)->all()->get($this->$throughColumn);
         }
 
+        $table = $class::configuration()->table;
         $ref = $this->row->ref($table, $throughColumn);
 
         if (!$ref) {
             return null;
         }
 
-        return new $class($ref);
+        return new $class($this->dbino, $ref);
     }
 
     /**
@@ -427,7 +415,7 @@ abstract class Model implements ISerializable
         $intermediate = $this->row->related($intermediateTable, $foreignColumn);
         $result = new ManyToManySelection($intermediate, $intermediateTable, $configuration->table, $foreignColumn, $referenceColumn, $this->row->getPrimary());
 
-        return new GroupedCollection($result, $class, $configuration->scopes);
+        return new GroupedCollection($result, $configuration);
     }
 
     protected function registerPlugins(): void
@@ -483,7 +471,7 @@ abstract class Model implements ISerializable
         $this->attributes[$name] = $value;
     }
 
-    protected function setAttributes(array $data): void
+    protected function setAttributes(iterable $data): void
     {
         foreach ($data as $key => $value) {
             $this->__set($key, $value);
@@ -540,12 +528,12 @@ abstract class Model implements ISerializable
     protected function raise(string $event, ...$args): void
     {
         $this->raise_Events($event, ...$args);
-        Reflection::callPrivateMethod(static::getRepository(), 'raise', [ $event, ...$args ]);
+        Reflection::callPrivateMethod($this->getConfiguration()->getRepository(), 'raise', [ $event, ...$args ]);
     }
 
     protected function getCast(string $field): ?AttributeCast
     {
-        return isset($this->casts[$field]) ? Dbino::_cast($this->casts[$field]) : null;
+        return isset($this->casts[$field]) ? $this->dbino->cast($this->casts[$field]) : null;
     }
 
     protected function prepareDbData(array $data): array
@@ -558,5 +546,17 @@ abstract class Model implements ISerializable
         }
 
         return $result;
+    }
+    
+    protected function getConfiguration(): Configuration
+    {
+        return new Configuration($this->dbino, [
+            'model'         => static::class,
+            'table'         => $this->table(),
+            'repository'    => $this->repository(),
+            'casts'         => $this->casts,
+            'scopes'        => $this->scopes,
+            'events'        => $this->events,
+        ]);
     }
 }

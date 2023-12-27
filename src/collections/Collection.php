@@ -5,6 +5,7 @@ namespace Varhall\Dbino\Collections;
 use Nette\Database\Table\ActiveRow;
 use Nette\Database\Table\GroupedSelection;
 use Nette\Database\Table\Selection;
+use Varhall\Dbino\Configuration;
 use Varhall\Dbino\Model;
 use Varhall\Dbino\Traits\Events;
 use Varhall\Utilino\Collections\ArrayCollection;
@@ -37,7 +38,7 @@ use Varhall\Utilino\Utils\Reflection;
  * @method mixed min(string $column) Returns minimum value from a column.
  * @method mixed max(string $column) Returns maximum value from a column.
  * @method mixed sum(string $column) Returns sum of values in a column.
- * @method void insert(iterable $data) Inserts row in a table. Returns ActiveRow or number of affected rows for Collection or table without primary key.
+ * @method Model|array|int|bool insert(iterable $data) Inserts row in a table. Returns ActiveRow or number of affected rows for Collection or table without primary key.
  * @method int update(iterable $data) Updates all rows in the result set.
  * @method int delete() Deletes all rows in the result set.
  * @method ActiveRow|false|null getReferencedTable(ActiveRow $row, ?string $table, ?string $column = null) Returns referenced row.
@@ -47,16 +48,16 @@ class Collection implements ICollection, \Iterator
 {
     use Events;
 
-    protected string $class;
+    protected Configuration $configuration;
 
     protected Selection $table;
 
     /// MAGIC METHODS
     
-    public function __construct(Selection $table, string $class)
+    public function __construct(Selection $table, Configuration $configuration)
     {
         $this->table = $table;
-        $this->class = $class;
+        $this->configuration = $configuration;
     }
 
     public function __destruct()
@@ -98,7 +99,7 @@ class Collection implements ICollection, \Iterator
 
     protected function createModel(ActiveRow $row): Model
     {
-        return new ($this->class)($row);
+        return new ($this->configuration->model)($this->configuration->getDbino(), $row);
     }
 
     protected function toArrayCollection()
@@ -418,7 +419,7 @@ class Collection implements ICollection, \Iterator
 
     public function search($value, callable $func = null)
     {
-        $func = $func !== null ? $func : [$this->class, 'search'];
+        $func = $func !== null ? $func : [$this->configuration->model, 'search'];
 
         return call_user_func($func, $this, $value);
     }

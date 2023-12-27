@@ -7,8 +7,7 @@ use Nette\InvalidArgumentException;
 
 class AttributeCastFactory
 {
-    /** @var Container */
-    protected $container;
+    protected Container $container;
 
     protected $casts = [
         'bool'      => BooleanCast::class,

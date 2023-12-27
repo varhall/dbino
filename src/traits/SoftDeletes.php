@@ -19,7 +19,7 @@ trait SoftDeletes
 
     public static function onlyTrashed(): Collection
     {
-        $instance = new static();
+        $instance = static::instance([]);
         return static::withTrashed()->where($instance->softDeleteColumn . ' NOT', null);
     }
 
