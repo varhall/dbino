@@ -3,8 +3,6 @@
 namespace Varhall\Dbino\DI;
 
 use Nette\DI\CompilerExtension;
-use Varhall\Dbino\Repository;
-use Varhall\Dbino\Mutators\MutatorFactory;
 
 class DbinoExtension extends CompilerExtension
 {
@@ -14,6 +12,6 @@ class DbinoExtension extends CompilerExtension
             $this->loadFromFile(__DIR__ . '/dbino.neon')['services'],
         );
 
-        $this->initialization->addBody('\Varhall\Dbino\Dbino::$container = $this;');
+        $this->initialization->addBody('\Varhall\Dbino\Dbino::initialize($this);');
     }
 }

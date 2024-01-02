@@ -3,57 +3,61 @@
 namespace Varhall\Dbino;
 
 use Nette\Database\Table\ActiveRow;
-use Nette\Database\Table\Selection;
 use Varhall\Dbino\Casts\AttributeCast;
 use Varhall\Dbino\Collections\Collection;
 use Varhall\Dbino\Collections\GroupedCollection;
-use Varhall\Dbino\Collections\ManyToManyCollection;
+use Varhall\Dbino\Collections\ManyToManySelection;
 use Varhall\Dbino\Events\DeleteArgs;
 use Varhall\Dbino\Events\InsertArgs;
 use Varhall\Dbino\Events\UpdateArgs;
-use Varhall\Dbino\Mutators\Mutator;
+use Varhall\Dbino\Scopes\Scope;
+use Varhall\Dbino\Traits\Events;
 use Varhall\Dbino\Traits\SoftDeletes;
 use Varhall\Dbino\Traits\Timestamps;
+use Varhall\Utilino\Collections\ICollection;
 use Varhall\Utilino\ISerializable;
 use Varhall\Utilino\Utils\Reflection;
 
 /**
  * Base database model class
  *
- * @author Ondrej Sibrava <sibrava@varhall.cz>
- *
  * @method static Collection all()
  * @method static Collection where($condition, ...$parameters)
  * @method static $this find($id)
  * @method static $this findOrDefault($id, array $data = [])
  * @method static $this findOrFail($id)
- * @method static instance(array $data)
- * @method static create(array $data)
+ * @method static instance(array $data = [])
+ * @method static create(array $data = [])
  * @method static array columns()
  * @method static Collection withTrashed()
  * @method static Collection onlyTrashed()
  */
-abstract class Model extends ActiveRow implements ISerializable
+abstract class Model implements ISerializable
 {
-    /** @var array */
-    protected $attributes   = [];
+    use Events {
+        raise as private raise_Events;
+    }
 
-    /** @var array */
-    protected $events       = [];
+    private Dbino $dbino;
 
-    /** @var array */
-    protected $casts        = [];
+    private ?ActiveRow $row;
 
-    /** @var array */
-    protected $filters      = [];
+    protected array $attributes     = [];
+
+    protected $casts                = [];
+
+    protected $scopes               = [];
 
 
     ////////////////////////////////////////////////////////////////////////////
     /// MAGIC METHODS                                                        ///
     ////////////////////////////////////////////////////////////////////////////
 
-    public function __construct()
+    public function __construct(Dbino $dbino, ?ActiveRow $row = null)
     {
+        $this->dbino = $dbino;
+        $this->row = $row;
+
         $this->on('creating', function($args) { $this->raise('saving', $args); });
         $this->on('updating', function($args) { $this->raise('saving', $args); });
 
@@ -61,22 +65,23 @@ abstract class Model extends ActiveRow implements ISerializable
         $this->on('updated', function($args) { $this->raise('saved', $args); });
 
         $this->initializeTraits();
-        $this->registerPlugins();
         $this->setup();
     }
 
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
-        if (isset($this->attributes[$name]))
+        if (isset($this->attributes[$name])) {
             return true;
+        }
 
-        if (!$this->isSaved())
+        if (!$this->isSaved()) {
             return false;
+        }
 
-        return parent::__isset($name);
+        return isset($this->row[$name]);
     }
 
-    public function &__get(string $key)
+    public function &__get(string $key): mixed
     {
         // call method with attribute name if exists
         if (method_exists($this, $key)) {
@@ -104,7 +109,7 @@ abstract class Model extends ActiveRow implements ISerializable
         return $value;
     }
 
-    public function __set($name, $value)
+    public function __set(string $name, mixed $value): void
     {
         $camelName = $this->toCamelCase($name);
 
@@ -119,12 +124,13 @@ abstract class Model extends ActiveRow implements ISerializable
         }
     }
 
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments): mixed
     {
-        $repository = static::getRepository();
+        $repository = static::configuration()->getRepository();
 
-        if (!method_exists($repository, $name))
+        if (!method_exists($repository, $name)) {
             throw new \Nette\MemberAccessException("Method {$name} not found in class " . get_class($repository));
+        }
 
         return call_user_func_array([ $repository, $name ], $arguments);
     }
@@ -134,34 +140,11 @@ abstract class Model extends ActiveRow implements ISerializable
     ////////////////////////////////////////////////////////////////////////////
     /// STATIC METHODS                                                       ///
     ////////////////////////////////////////////////////////////////////////////
-
-    public static function getRepository(): Repository
+    
+    public static function configuration(): Configuration
     {
-        return Dbino::_repository(static::class);
+        return (new static(Dbino::instance()))->getConfiguration();
     }
-
-    public static function search(Selection $collection, $value, array $args = [])
-    {
-        $columns = static::instance()->searchedColumns();
-
-        if (empty($columns))
-            return $collection;
-
-        $query = [];
-        $params = [];
-        foreach ($columns as $column) {
-            $query[] = "{$column} LIKE ?";
-            $params[] = "%{$value}%";
-        }
-
-        if (!empty($args)) {
-            call_user_func_array('array_push', array_merge([&$query], array_keys($args)));
-            call_user_func_array('array_push', array_merge([&$params], array_values($args)));
-        }
-
-        return $collection->whereOr(array_combine($query, $params));
-    }
-
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -180,17 +163,7 @@ abstract class Model extends ActiveRow implements ISerializable
 
     }
 
-    protected function plugins()
-    {
-        return [];
-    }
-
     protected function defaults()
-    {
-        return [];
-    }
-
-    protected function attributeTypes()
     {
         return [];
     }
@@ -205,48 +178,43 @@ abstract class Model extends ActiveRow implements ISerializable
         return 'c';
     }
 
-    protected function searchedColumns()
+    public function addScope(Scope $scope, ?string $name = null): void
     {
-        return [];
+        $this->scopes[$name ?? get_class($scope)] = $scope;
     }
 
-    protected function collectionFilters()
+    public function removeScope(string $name): void
     {
-        return $this->filters;
+        unset($this->scopes[$name]);
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////
     /// PUBLIC INSTANCE METHODS                                              ///
     ////////////////////////////////////////////////////////////////////////////
 
-    public function fill(array $data)
+    public function fill(array $data): static
     {
         $this->setAttributes($data);
 
         return $this;
     }
 
-    public function isSaved()
+    public function isSaved(): bool
     {
         return !$this->isNew() && empty($this->attributes);
     }
 
-    public function isNew()
+    public function isNew(): bool
     {
-        try {
-            return !$this->getTable();
-
-        } catch (\TypeError $ex) {
-            return true;
-        }
+        return !$this->row;
     }
 
-    public function save()
+    public function save(): static
     {
-        if (empty($this->attributes))
+        if (empty($this->attributes)) {
             return $this;
+        }
 
         if ($this->isNew()) {
             $this->insertInstance();
@@ -269,38 +237,51 @@ abstract class Model extends ActiveRow implements ISerializable
 
     public function delete(): int
     {
+        if ($this->isNew()) {
+            throw new \Nette\InvalidStateException('Cannot delete unsaved model');
+        }
+
         $args = new DeleteArgs([
-            'id'        => $this->getPrimary(),
+            'id'        => $this->row->getPrimary(),
             'instance'  => $this,
             'soft'      => false
         ]);
 
         $this->raise('deleting', $args);
-
-        $result = parent::delete();
-
+        $result = $this->row->delete();
         $this->raise('deleted', $args);
 
         return $result;
     }
 
-    public function duplicate(array $values = [], array $except = [])
+    public function duplicate(array $values = [], array $except = []): static
     {
+        if ($this->isNew()) {
+            throw new \Nette\InvalidStateException('Cannot duplicate unsaved model');
+        }
+
         $except = array_merge(
             Reflection::hasTrait($this, Timestamps::class) ? array_values($this->timestampsColumns()) : [],
-            Reflection::hasTrait($this, SoftDeletes::class) ? (array) $this->softDeleteColumn() : [],
-            (array) $this->getTable()->getPrimary(false),
+            Reflection::hasTrait($this, SoftDeletes::class) ? (array) $this->softDeleteColumn : [],
+            (array) $this->row->getTable()->getPrimary(false),
             $except
         );
+
 
         $data = $this->toNativeArray();
 
         foreach ($except as $property) {
-            if (isset($data[$property]))
+            if (isset($data[$property])) {
                 unset($data[$property]);
+            }
         }
 
         return static::create(array_merge($data, $values));
+    }
+
+    public function getPrimary(): mixed
+    {
+        return $this->row ? $this->row->getPrimary() : null;
     }
 
     public function toArray(): array
@@ -329,18 +310,12 @@ abstract class Model extends ActiveRow implements ISerializable
         return \Nette\Utils\Json::encode($this->toArray());
     }
 
-    public function on($event, callable $callback)
-    {
-        $this->events[$event][] = $callback;
-    }
-
-
 
     ////////////////////////////////////////////////////////////////////////////
     /// PRIVATE & PROTECTED METHODS                                          ///
     ////////////////////////////////////////////////////////////////////////////
 
-    protected function insertInstance()
+    protected function insertInstance(): void
     {
         // raise events
         $this->raise('creating', new InsertArgs([
@@ -349,22 +324,24 @@ abstract class Model extends ActiveRow implements ISerializable
         ]));
 
         // insert
-        $model = static::getRepository()->all()->insert($this->prepareDbData($this->attributes));
-        Reflection::writePrivateProperty($this, 'data', Reflection::readPrivateProperty($model, 'data'));
-        Reflection::writePrivateProperty($this, 'table', Reflection::readPrivateProperty($model, 'table'));
+        $model = $this->getConfiguration()->getRepository()->all()->insert($this->prepareDbData($this->attributes));
+
+        if ($model instanceof Model) {
+            $this->row = $model->row;
+        }
 
         // raise events
         $this->raise('created', new InsertArgs([
             'data'      => $this->attributes,
-            'instance'  => $model,
-            'id'        => $model instanceof ActiveRow ? $model->getPrimary() : null
+            'instance'  => $this,
+            'id'        => $this->row ? $this->row->getPrimary() : null
         ]));
     }
 
     protected function updateInstance()
     {
         // prcompute data
-        $originals = parent::toArray();
+        $originals = $this->row->toArray();
         $diff = array_filter($this->attributes, function($value, $key) use ($originals) {
             return $value != $originals[$key];
         }, ARRAY_FILTER_USE_BOTH);
@@ -373,14 +350,14 @@ abstract class Model extends ActiveRow implements ISerializable
         $args = new UpdateArgs([
             'data'      => $this->toNativeArray(),
             'instance'  => $this,
-            'id'        => $this->getPrimary(),
+            'id'        => $this->row->getPrimary(),
             'diff'      => $diff
         ]);
 
         $this->raise('updating', $args);
 
         // update
-        $result = parent::update($this->prepareDbData($this->attributes));
+        $result = $this->row->update($this->prepareDbData($this->attributes));
 
         // raise events
         $this->raise('updated', $args);
@@ -388,107 +365,109 @@ abstract class Model extends ActiveRow implements ISerializable
         return $result;
     }
 
-    protected function hasMany($class, $throughColumn = null)
+    protected function hasMany(string $class, ?string $throughColumn = null): ICollection
     {
-        $table = Dbino::_config($class, 'table');
-        $related = $this->related($table, $throughColumn);
+        $configuration = $class::configuration();
+        $related = $this->row->related($configuration->table, $throughColumn);
 
-        return new GroupedCollection($related, $class);
+        return new GroupedCollection($related, $configuration);
     }
 
-    protected function hasOne($class, $throughColumn = null)
+    protected function hasOne(string $class, ?string $throughColumn = null): Model
     {
         return $this->hasMany($class, $throughColumn)->first();
     }
 
-    protected function belongsTo($class, $throughColumn = null)
+    protected function belongsTo(string $class, ?string $throughColumn = null): ?Model
     {
-        $table = Dbino::_config($class, 'table');
-
-        if ($this->isNew())
-            return Dbino::_repository($class)->all()->get($this->$throughColumn);
-
-        $ref = $this->ref($table, $throughColumn);
-
-        if (!$ref)
-            return null;
-
-        $instance = Dbino::_model($class);
-
-        Reflection::writePrivateProperty($instance, 'data', Reflection::readPrivateProperty($ref, 'data'));
-        Reflection::writePrivateProperty($instance, 'table', Reflection::readPrivateProperty($ref, 'table'));
-
-        return $instance;
-    }
-
-    protected function belongsToMany($class, $intermediateTable, $foreignColumn, $referenceColumn)
-    {
-        $table = Dbino::_config($class, 'table');
-
-        $intermediate = $this->related($intermediateTable, $foreignColumn);
-        return new ManyToManyCollection($intermediate, $intermediateTable, $table, $foreignColumn, $referenceColumn, $this->getPrimary(), $class);
-    }
-
-    protected function registerPlugins()
-    {
-        foreach ($this->plugins() as $plugin) {
-            $plugin->register($this);
+        if ($this->isNew()) {
+            return $this->dbino->repository($class)->all()->get($this->$throughColumn);
         }
+
+        $table = $class::configuration()->table;
+        $ref = $this->row->ref($table, $throughColumn);
+
+        if (!$ref) {
+            return null;
+        }
+
+        return new $class($this->dbino, $ref);
     }
 
-    protected function addCast($field, AttributeCast $cast)
+    /**
+     * Maps many to many relationship. Example reference from Student (current) to Course (related):
+     *
+     * @param string $class Target class Course::class
+     * @param string $intermediateTable Intermediate table student_courses
+     * @param string $foreignColumn Column in intermediate table pointing to current class (student_id)
+     * @param string $referenceColumn Column in intermediate table pointing to related class (course_id)
+     */
+    protected function belongsToMany(string $class, string $intermediateTable, string $foreignColumn, string $referenceColumn): ICollection
+    {
+        $configuration = $class::configuration();
+
+        $intermediate = $this->row->related($intermediateTable, $foreignColumn);
+        $result = new ManyToManySelection($intermediate, $intermediateTable, $configuration->table, $foreignColumn, $referenceColumn, $this->row->getPrimary());
+
+        return new GroupedCollection($result, $configuration);
+    }
+
+    protected function addCast(string $field, AttributeCast $cast): void
     {
         $this->casts[$field] = $cast;
     }
 
-    protected function initializeTraits()
+    protected function initializeTraits(): void
     {
         $class = new \ReflectionClass($this);
 
         foreach ($class->getTraits() as $trait) {
             $method = 'initialize' . $trait->getShortName();
 
-            if (method_exists($this, $method))
+            if (method_exists($this, $method)) {
                 call_user_func([ $this, $method ]);
+            }
         }
     }
 
-    protected function getAttribute($key)
+    protected function getAttribute(string $key): mixed
     {
         // get unsaved value if set
-        if (array_key_exists($key, $this->attributes))
+        if (array_key_exists($key, $this->attributes)) {
             return $this->readField($key, $this->attributes[$key]);
+        }
 
         // call parent getter
         $value = null;
 
         try {
-            if (!$this->isNew())
-                $value = parent::__get($key);
+            if (!$this->isNew()) {
+                $value = $this->row->$key;
+            }
 
         } catch (\Nette\MemberAccessException $ex) {
-            $this->accessColumn(null);
-            $value = parent::__get($key);
+            $this->row->accessColumn(null);
+            $value = $this->row->$key;
         }
 
         return $this->readField($key, $value);
     }
 
-    protected function setAttribute($name, $value)
+    protected function setAttribute(string $name, mixed $value): void
     {
         $this->attributes[$name] = $value;
     }
 
-    protected function setAttributes($data)
+    protected function setAttributes(iterable $data): void
     {
         foreach ($data as $key => $value) {
             $this->__set($key, $value);
         }
     }
 
-    protected function toNativeArray()
+    protected function toNativeArray(): array
     {
-        $values = array_merge(!$this->isNew() ? parent::toArray() : [], $this->attributes);
+        $values = array_merge(!$this->isNew() ? $this->row->toArray() : [], $this->attributes);
 
         if (!$values || !is_array($values)) {
             throw new \Nette\InvalidStateException('Unable convert row to array');
@@ -497,7 +476,7 @@ abstract class Model extends ActiveRow implements ISerializable
         return $values;
     }
 
-    protected function readField($key, $value)
+    protected function readField(string $key, mixed $value): mixed
     {
         $cast = $this->getCast($key);
 
@@ -507,7 +486,7 @@ abstract class Model extends ActiveRow implements ISerializable
         return $cast ? $cast->get($this, $key, $value, [ 'defaults' => $defaults ]) : $value;
     }
 
-    protected function toCamelCase($input)
+    protected function toCamelCase(string $input): string
     {
         $case = implode('',
             array_map(
@@ -519,7 +498,7 @@ abstract class Model extends ActiveRow implements ISerializable
         return lcfirst($case);
     }
 
-    protected function fromCamelCase($input)
+    protected function fromCamelCase(string $input): string
     {
         $input = ucfirst($input);
 
@@ -533,27 +512,18 @@ abstract class Model extends ActiveRow implements ISerializable
         return strtolower(implode('_', $ret));
     }
 
-    protected function raise($event, ...$args)
+    protected function raise(string $event, ...$args): void
     {
-        $events = array_merge_recursive($this->events, static::getRepository()->getEvents());
-
-        if (!isset($events[$event]))
-            return;
-
-        foreach ($events[$event] as $handler) {
-            if (!is_callable($handler))
-                continue;
-
-            call_user_func_array($handler, $args);
-        }
+        $this->raise_Events($event, ...$args);
+        Reflection::callPrivateMethod($this->getConfiguration()->getRepository(), 'raise', [ $event, ...$args ]);
     }
 
-    protected function getCast($field): ?AttributeCast
+    protected function getCast(string $field): ?AttributeCast
     {
-        return isset($this->casts[$field]) ? Dbino::_cast($this->casts[$field]) : null;
+        return isset($this->casts[$field]) ? $this->dbino->cast($this->casts[$field]) : null;
     }
 
-    protected function prepareDbData(array $data)
+    protected function prepareDbData(array $data): array
     {
         $result = [];
 
@@ -563,5 +533,17 @@ abstract class Model extends ActiveRow implements ISerializable
         }
 
         return $result;
+    }
+    
+    protected function getConfiguration(): Configuration
+    {
+        return new Configuration($this->dbino, [
+            'model'         => static::class,
+            'table'         => $this->table(),
+            'repository'    => $this->repository(),
+            'casts'         => $this->casts,
+            'scopes'        => $this->scopes,
+            'events'        => $this->events,
+        ]);
     }
 }

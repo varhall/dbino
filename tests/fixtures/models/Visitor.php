@@ -2,7 +2,7 @@
 
 namespace Varhall\Dbino\Tests\Models;
 
-use Varhall\Dbino\Plugins\UuidPlugin;
+use Varhall\Dbino\Traits\Uuid;
 
 /**
  * Author test model
@@ -11,15 +11,14 @@ use Varhall\Dbino\Plugins\UuidPlugin;
  */
 class Visitor extends \Varhall\Dbino\Model
 {
+    use Uuid;
+
+    protected $casts = [
+        'id'    => 'uuid'
+    ];
+
     // configuration 
 
-    protected function plugins()
-    {
-        return [
-            new UuidPlugin()
-        ];
-    }
-    
     protected function table()
     {
         return 'visitors';

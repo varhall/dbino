@@ -1,36 +1,37 @@
 <?php
 
-namespace Varhall\Dbino\Plugins;
+namespace Varhall\Dbino\Traits;
 
 
 use Varhall\Dbino\Events\InsertArgs;
 use Varhall\Dbino\Model;
 
-class UuidPlugin extends Plugin
+trait Uuid
 {
-    protected $columns = [];
-
-    public function __construct($columns = 'id')
+    protected function initializeUuid(): void
     {
-        $this->columns = (array) $columns;
-    }
-
-    public function register(Model $model)
-    {
-        $model->on('creating', function(InsertArgs $args) {
+        $this->on('creating', function(InsertArgs $args) {
             $this->fillColumns($args->instance);
         });
     }
 
-    protected function fillColumns($model)
+    private function fillColumns(Model $model): void
     {
-        foreach ($this->columns as $column) {
-            if (empty($model->$column))
+        foreach ($this->uuidColumns() as $column) {
+            if (empty($model->$column)) {
                 $model->$column = $this->guid();
+            }
         }
     }
 
-    protected function guid()
+    private function uuidColumns(): array
+    {
+        return array_keys(array_filter($this->casts, function($cast) {
+            return $cast === 'uuid';
+        }));
+    }
+
+    private function guid(): string
     {
         if (function_exists('com_create_guid') === true) {
             return strtolower(trim(com_create_guid(), '{}'));

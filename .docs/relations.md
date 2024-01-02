@@ -1,32 +1,41 @@
 # Relations
 
 - [Introduction](#introduction)
-- [Defining Relationships](#defining-relationships)
-  - [One To Many](#one-to-many)
+  - [Defining Relationships](#defining-relationships)
+- [One To Many](#one-to-many)
   - [Defining The Inverse of The Relationship](#defining-the-inverse-of-the-relationship)
-  - [One To One](#one-to-one)
+- [One To One](#one-to-one)
   - [One To One (Inverse) / Belongs To](#one-to-one-inverse)
   - [Has One Through](#has-one-through)
   - [Has Many Through](#has-many-through)
-  - [Key Conventions](#has-many-key-conventions)
-- [Many To Many Relationships](#many-to-many)
+- [Many-to-Many Relationships](#many-to-many)
   - [Defining The Inverse of The Relationship](#many-to-many-defining-the-inverse-of-the-relationship)
+  - [Relation management](#many-to-many-relation-management)
+    - [Attaching / Detaching / Syncing](#many-to-many-attaching-detaching-syncing)
+    - [Sync events](#many-to-many-sync-events)
+- [Key Conventions](#key-conventions)
 
 
 <a name="introduction"></a>
 ## Introduction
 
-Database tables are often related to one another. For example, an author may have many books or an order could be related to the user who placed it. Dbino makes managing and working with these relationships easy, and supports a variety of common relationships:
+Database tables are often related to one another. For example, an author may have many books or an order could be related 
+to the user who placed it. Dbino makes managing and working with these relationships easy, and supports a variety of common relationships:
 
 <a name="defining-relationships"></a>
-## Defining Relationships
+### Defining Relationships
 
-Relationships are defined as dynamic properties on model classes. Since relationships also serve as powerful collections, defining relationships as methods provides powerful method chaining and querying capabilities. For example, we may chain additional query constraints on this `books` relationship:
+Relationships are defined as dynamic properties on model classes. Since relationships also serve as powerful collections, 
+defining relationships as methods provides powerful method chaining and querying capabilities. For example, we may chain 
+additional query constraints on this `books` relationship:
 
-    $author->books->where('available', true)->first();
+    $books = $author->books;
+
+> **_IMPORTANT_**: It is not recommended to manually return the related data because it results in N+1 problem. Instead, you should use native
+`hasMany`, `belongsTo` or `belongsToMany` methods.
 
 <a name="one-to-many"></a>
-### One To Many
+## One To Many
 
 A one-to-many relationship is a very basic type of database relationship. For example, a `Author` model might be associated with many `Book` model through `author_id` foreign key column. To define this relationship, we will place an `books` method on the `Author` model. The `books` method should call the `hasMany` method and return its result.
 
@@ -65,7 +74,7 @@ Since all relationships also serve as collections, you may add further constrain
 
 
 <a name="one-to-one-defining-the-inverse-of-the-relationship"></a>
-#### Defining The Inverse Of The Relationship
+### Defining The Inverse Of The Relationship
 
 All the relations can be uni-directional or bi-directional. The direction only depends on dynamic properties.
 
@@ -93,7 +102,7 @@ If backward access from `Book` model to `Author` model is needed, we can define 
 When invoking the `author` method, `Author` model that has an `id` which matches the `author_id` column on the `Author` model is returned.
 
 <a name="one-to-one"></a>
-### One To One
+## One To One
 
 A one-to-one relationship is used to define relationships where a single model depends only on one model. For example, a book single author and author can has only one book. Like all other relationships, one-to-one relationships are defined by defining a dynamic property on model:
 
@@ -156,37 +165,13 @@ Once the relationship has been defined, we can retrieve a book's author by acces
 
 In the example above, Dbino will attempt to find a `Book` model that has an `id` which matches the `id` column on the `Book` model.
 
-<a name="has-many-key-conventions"></a>
-#### Key Conventions
-
-Since Nette Database uses database metadata to determine relationships between tables, no special arguments are needed. If foreign keys are properly defined on database columns, column arguments in relationship methods `hasMany`, `hasOne`, `belonsTo` are optional.
-
-    <?php
-
-    namespace App\Models;
-
-    use Varhall\Dbino\Model;
-
-    class Author extends Model
-    {
-        public function books()
-        {
-            return $this->hasMany(Book::class);
-        }
-
-        protected function table()
-        {
-            return 'authors';
-        }
-    }
-
 <a name="many-to-many"></a>
 ## Many To Many Relationships
 
 Many-to-many relations are slightly more complicated than `hasOne` and `hasMany` relationships. An example of a many-to-many relationship is a book that has many tags and those tags are also shared by other books in the application. For example, a book may have assigned the tags of "PHP" and "Advanced"; however, those tags may also be assigned to other books as well. So, a book has many tags and a tag has many books.
 
 <a name="many-to-many-table-structure"></a>
-#### Table Structure
+### Table Structure
 
 To define this relationship, three database tables are needed: `books`, `tags`, and `book_tags`. The `book_tags` table is derived from the alphabetical order of the related model names and contains `user_id` and `role_id` columns. This table is used as an intermediate table linking the books and tags.
 
@@ -205,7 +190,7 @@ Remember, since a role can belong to many books, we cannot simply place a `book_
         tag_id - integer
 
 <a name="many-to-many-model-structure"></a>
-#### Model Structure
+### Model Structure
 
 Many-to-many relationships are defined by writing a method that returns the result of the `belongsToMany` method. The `belongsToMany` method is provided by the `Illuminate\Database\Eloquent\Model` base class that is used by all of your application's Eloquent models. For example, let's define a `roles` method on our `User` model. The first argument passed to this method is the name of the related model class:
 
@@ -241,7 +226,7 @@ Since all relationships also serve as collection, you may add further constraint
     $tags = Book::find(1)->tags()->orderBy('name')->fetch();
 
 <a name="many-to-many-defining-the-inverse-of-the-relationship"></a>
-#### Defining The Inverse Of The Relationship
+### Defining The Inverse Of The Relationship
 
 To define the "inverse" of a many-to-many relationship, you should define a method on the related model which also returns the result of the `belongsToMany` method. To complete our book / tag example, let's define the `books` method on the `Tag` model:
 
@@ -263,3 +248,84 @@ To define the "inverse" of a many-to-many relationship, you should define a meth
     }
 
 As you can see, the relationship is defined exactly the same as its `Book` model counterpart with the exception of referencing the `App\Models\Book` model. Since we're reusing the `belongsToMany` method, all of the usual table and key customization options are available when defining the "inverse" of many-to-many relationships.
+
+<a name="many-to-many-relation-management"></a>
+### Relation management
+
+Many-to-many relation is quite complicated. It is not only about defining the relation but also about managing it. Dbino provides methods for managing many-to-many relations.
+
+<a name="many-to-many-attaching-detaching-syncing"></a>
+#### Attaching / Detaching / Syncing
+
+For attaching, detaching or syncing to a many-to-many relationship, you may use methods such as `attach`, `detach`, and 
+`sync`. The `attach` method accepts an array of IDs to add to the intermediate table, while the `detach` method accepts 
+an array of IDs to remove from the intermediate table. The `sync` method accepts an array of IDs to place on the intermediate 
+table. Any IDs that are not in the given array will be removed from the intermediate table. The `sync` method returns the 
+IDs that were actually attached to or detached from the model, so you may pass these IDs to your response as needed:
+
+    <?php
+
+    use App\Models\Book;
+
+    $book = Book::find(1);
+
+    $book->tags->attach(1);             // Add relation to tag with id 1
+    $book->tags->attach([ 1, 2, 3 ]);   // Add relations to tags with ids 1, 2, 3
+
+    $book->tags->detach(1);             // Remove relation to tag with id 1
+    $book->tags->detach([ 1, 2, 3 ]);   // Remove relations to tags with ids 1, 2, 3
+    $book->tags->detach();              // Remove all relations
+
+    $book->tags()->sync([1, 2, 3]);     // Adds/or removes relations to tags with ids 1, 2, 3
+
+Methods `attach`, `detach` manage to ignore duplicates. If you try to attach relation that already exists, it will be ignored and 
+so if you try to detach relation that does not exist, it will be ignored.
+
+`Sync` method automatically attaches/detaches the referenced data. It means that if you 
+pass array of ids to `sync` method, it will attach all the ids that are not already attached and detach all the ids that are not in the array.
+
+<a name="many-to-many-sync-events"></a>
+#### Sync events
+
+When attaching or detaching relations, you can use `beforeSync` and `afterSync` events. The main purpose of these events
+is to eventually modify the data before they are attached or detached.
+
+    <?php
+
+    use App\Models\Book;
+
+    $book = Book::find(1);
+
+    $book->tags->on('beforeSync', function($collection, $values) {
+      // some action before synchronization
+    })->sync([ 1, 2, 3 ]);
+
+    // or another definition
+    $book->tags->onBeforeSync(function($collection, $values) {
+      // some action before synchronization
+    })->sync([ 1, 2, 3 ]);
+
+
+<a name="key-conventions"></a>
+## Key Conventions
+
+Since Nette Database uses database metadata to determine relationships between tables, no special arguments are needed. If foreign keys are properly defined on database columns, column arguments in relationship methods `hasMany`, `hasOne`, `belonsTo` are optional.
+
+    <?php
+
+    namespace App\Models;
+
+    use Varhall\Dbino\Model;
+
+    class Author extends Model
+    {
+        public function books()
+        {
+            return $this->hasMany(Book::class);
+        }
+
+        protected function table()
+        {
+            return 'authors';
+        }
+    }

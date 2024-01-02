@@ -7,6 +7,7 @@ use Nette\Caching\Storages\MemoryStorage;
 use Varhall\Dbino\Collections\Collection;
 use Varhall\Dbino\Dbino;
 use Varhall\Dbino\Events\InsertArgs;
+use Varhall\Dbino\Scopes\ClosureScope;
 use Varhall\Utilino\Utils\Reflection;
 
 trait TreeNode
@@ -14,12 +15,6 @@ trait TreeNode
     private static $cache = null;
 
     /// STATIC METHODS
-
-    public static function all(): Collection
-    {
-        $left = static::instance()->treeColumns()->left;
-        return static::getRepository()->all()->order($left);
-    }
 
     public static function roots()
     {
@@ -43,7 +38,7 @@ trait TreeNode
             'select'    => $hasSoftDelete ? "AND t2.{$sdColumn} IS null" : '',
         ];
 
-        return Dbino::_explorer()->query("SELECT t0.id AS id, 
+        return Dbino::instance()->explorer()->query("SELECT t0.id AS id, 
                                 (SELECT GROUP_CONCAT(t2.{$column} ORDER BY t2.{$left} SEPARATOR '{$separator}')
                                     FROM {$table} t2 
                                     WHERE t2.{$left} <= t0.{$left} AND t2.{$right} >= t0.{$right} {$softDeletes->select}
@@ -182,6 +177,11 @@ trait TreeNode
 
     protected function initializeTreeNode()
     {
+        // order
+        $left = $this->treeColumns()->left;
+        $this->addScope(new ClosureScope(fn(Collection $collection) => $collection->order($left)), 'tree-node');
+
+        // creating
         $this->on('creating', function(InsertArgs $args) {
             $this->fillColumns();
         });

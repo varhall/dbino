@@ -6,6 +6,8 @@
   - [Defining A Mutator](#defining-a-mutator)
 - [Attribute Casting](#attribute-casting)
   - [JSON Casting](#json-casting)
+  - [UUID Casting](#uuid-casting)
+  - [Hash Casting](#hash-casting)
 - [Custom Casts](#custom-casts)
 - [Array / JSON Serialization](#array-json-serialization)
   - [Hiding Attributes From Array](#hiding-attributes-from-array)
@@ -117,6 +119,8 @@ The `$casts` property should be an array where the key is the name of the attrib
 - `float` or `number` or `real`
 - `string`
 - `json`
+- `uuid`
+- `hash`
 
 To demonstrate attribute casting, let's cast the `is_admin` attribute, which is stored in our database as an integer (`0` or `1`) to a boolean value:
 
@@ -183,6 +187,53 @@ Once the cast is defined, you may access the `options` attribute and it will aut
     $user->save();
 
 > TODO: document JSON options
+
+<a name="uuid-casting"></a>
+## UUID
+
+The `uuid` cast will automatically generate a UUID when the model is created and store it in the database. To use the 
+`uuid` cast, you should use `Uuid` trait and define a `uuid` column on your table:
+
+    <?php
+
+    namespace App\Models;
+
+    use Varhall\Dbino\Model;
+    use Varhall\Dbino\Traits\Uuid;
+
+    class User extends Model
+    {
+        use Uuid;
+
+        protected $casts = [
+            'id' => 'uuid',
+        ];
+    }
+
+    $user = User::create([ 'name' => 'Hans', 'surname' => 'Ulrich' ]);
+    $user->id; // eg. 5d4a3b6c-7f8b-4d2e-9a1b-6c7d8e9f0a1b
+
+
+<a name="hash-casting"></a>
+## Hash Casting
+
+Hash cast it is a special cast that can be used to hash values. It is useful for example for password hashing. It automatically 
+hashes value to Bcrypt using standard `\Nette\Security\Passwords` when it is set.
+
+    <?php
+
+    namespace App\Models;
+
+    use Varhall\Dbino\Model;
+
+    class User extends Model
+    {
+        protected $casts = [
+            'password' => 'hash',
+        ];
+    }
+
+    $user = User::create([ 'name' => 'Hans', 'surname' => 'Ulrich', 'password' => 'secret' ]);
 
 <a name="custom-casts"></a>
 ## Custom Casts

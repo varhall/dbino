@@ -7,8 +7,7 @@ use Nette\InvalidArgumentException;
 
 class AttributeCastFactory
 {
-    /** @var Container */
-    protected $container;
+    protected Container $container;
 
     protected $casts = [
         'bool'      => BooleanCast::class,
@@ -21,7 +20,8 @@ class AttributeCastFactory
         'number'    => FloatCast::class,
         'string'    => StringCast::class,
         'json'      => JsonCast::class,
-        'hash'      => HashCast::class
+        'hash'      => HashCast::class,
+        'uuid'      => DummyCast::class,
     ];
 
     public function __construct(Container $container)
@@ -31,24 +31,26 @@ class AttributeCastFactory
 
     public function create($args): AttributeCast
     {
-        if (is_string($args))
+        if (is_string($args)) {
             $args = explode(':', $args);
+        }
 
-        if (!is_array($args))
+        if (!is_array($args)) {
             throw new InvalidArgumentException('Cast argument must be string or array');
+        }
 
         $class = array_shift($args);
 
-        $args = array_map(function($x) {
-            return is_string($x) ? explode(',', $x) : (array) $x;
-        }, $args);
+        $args = array_map(fn($x) => is_string($x) ? explode(',', $x) : (array) $x, $args);
         $args = array_merge(...$args);
 
-        if (array_key_exists($class, $this->casts))
+        if (array_key_exists($class, $this->casts)) {
             $class = $this->casts[$class];
+        }
 
-        if (!is_subclass_of($class, AttributeCast::class))
+        if (!is_subclass_of($class, AttributeCast::class)) {
             throw new InvalidArgumentException("Required Cast {$class} is not type of " . AttributeCast::class);
+        }
 
         return $this->container->createInstance($class, $args);
     }

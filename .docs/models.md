@@ -17,13 +17,9 @@
   - [Mass Updates](#mass-updates)
   - [Examining Attribute Changes](#examining-attribute-changes)
 - [Deleting Models](#deleting-models)
-  - [Deleting Models Using Queries](#deleting-models-using-queries)
-  - [Soft Deleting](#soft-deleting)
-  - [Configuring Soft Deleted models](#configuring-soft-deleted-models)
-  - [Permanently Deleting Models](#permanently-deleting-models)
-  - [Restoring Soft Deleted Models](#restoring-soft-deleted-models)
 - [Duplicating Models](#duplicating-models)
 - [Scopes](#scopes)
+  - [Custom scopes](#custom-scopes)
 - [Events](#events)
   - [Model Events](#model-events)
   - [Repository Events](#repository-events)
@@ -32,7 +28,7 @@
 <a name="model-definition"></a>
 ## Model Definition
 
-Model is a simple class automatically mapped to database table. It's a simple extension of `\Nette\Database\Table\ActiveRow`. Let's examine a basic model class:
+Model is a simple class automatically mapped to database table. It's a decorator of `\Nette\Database\Table\ActiveRow`. Let's examine a basic model class:
 
 Each model extends a base class `Model` and defines `table` method which is the class mapped to. Columns and keys are created dynamically from the database. Names are based on column names.
 
@@ -46,8 +42,6 @@ Each model extends a base class `Model` and defines `table` method which is the 
     {
         /**
          * The table associated with the model.
-         *
-         * @var string
          */
         protected function table()
         {
@@ -87,7 +81,8 @@ Since the columns are generated automatically using the column names, accessor m
 <a name="dynamic-properties"></a>
 ### Dynamic properties
 
-Models allows to create some dynamic properties. These properties act as readonly virtual columns.
+Model allows to create some dynamic properties. These properties act as readonly virtual columns. 
+It basically does not matter whether the property is called as method or property. 
 
     <?php
 
@@ -137,7 +132,7 @@ Dbino can automatically manage created and updated timestamps on model. If `Time
         }
     }
 
-If you need to customize the names of the columns used to store the timestamps, you may define `CREATED_AT` and `UPDATED_AT` constants on your model:
+If you need to customize the names of the columns used to store the timestamps, you may define method `timestampsColumns` on your model:
 
     <?php
 
@@ -150,8 +145,13 @@ If you need to customize the names of the columns used to store the timestamps, 
     {
         use Timestamps;
 
-        const CREATED_AT = 'creation_date';
-        const UPDATED_AT = 'updated_date';
+        protected function timestampsColumns()
+        {
+            return [
+                'created' => 'created_at',
+                'updated' => 'updated_at'
+            ];
+        }
 
         protected function table()
         {
@@ -206,7 +206,7 @@ Once you have created a model and its associated database table, you are ready t
 <a name="building-queries"></a>
 #### Building Queries
 
-The `all` method returns instance of `Collection`. Collection is improved Nette `Selection` object so you can use all of its query methods and much more!
+The `all` method returns instance of `Collection`. Collection is decorator of Nette `Selection` object, so you can use all of its query methods and much more!
 
     $authors = Author::where('published', true)
                    ->where('created_at > ?', new \DateTime('-1 month'))  
@@ -218,12 +218,11 @@ The `all` method returns instance of `Collection`. Collection is improved Nette 
 
 As we have seen, Collection methods like `all` and `where` retrieve multiple records from the database. However, these methods don't return a plain PHP array. Instead, an instance of `Varhall\Dbino\Collections\Collection` is returned.
 
-The Dbino `Collection` class extends Nette base `Nette\Database\Table\Selection` class and implements `Varhall\Utilino\Collections\ICollection`, which provides a variety of helpful methods for interacting with data collections. For example, the `map` method can transform each item of collection to another value:
+The Dbino `Collection` class wraps Nette base `Nette\Database\Table\Selection` class and implements `Varhall\Utilino\Collections\ICollection`, which provides a variety of helpful methods for interacting with data collections. For example, the `map` method can transform each item of collection to another value:
 
-    $authors = Author::where('published', true)
-                   ->map(function($author) {
-                       return $author->name;                    
-                   });
+    $authors = Author::where('published', true)->map(function($author) {
+        return $author->name;                    
+    });
 
 
 In addition to the methods provided by Utilino collection interface, the Dbino collection class provides a few extra methods coming from Nette `Selection`.
@@ -443,7 +442,7 @@ Soft delete column can be configured overriding method `softDeleteColumn` define
 
         protected function softDeleteColumn()
         {
-            return 'removed_at';
+            return 'was_removed';
         }
 
         protected function table()
@@ -516,7 +515,7 @@ Values can be automatically prefilled or excluded from created clone.
 ## Scopes
 
 Sometimes you have data in a table but these data should not available only in some views. As example
-we can use `Post` where some posts belongs to some tenants. You can simple narrow the results manually
+we can use `Post` where some posts belong to some tenants. You can simply narrow the results manually
 using `where` condition, but with `Scope` trait is the manipulation much easier.
 
     namespace App\Models;
@@ -552,6 +551,39 @@ fills automatically `customer_id` set to 1.
 > {note} Scope columns use events. Notice that these events are not triggered in some cases, especially
 > within mass operations.
 
+Sometimes you need to retrieve unscoped data. This can be done using `unscoped` method and pass scoped column or array of columns. 
+
+    $posts = Post::unscoped('customer_id');
+
+<a name="custom-scopes"></a>
+### Custom scopes
+
+Some traits are internally using scopes. For example `SoftDeletes` trait uses scope `deleted_at` to filter out soft deleted models. You can define your own scopes using `addScope` method.
+This is usually configured in `setup` method. This means that selecting data from database will be always scoped and
+only Posts with value `1` in column `customer_id` will be returned.
+
+    namespace App\Models;
+
+    use Varhall\Dbino\Model;
+
+    class Post extends Model
+    {
+        protected function setup()
+        {
+            $this->addScope(new ColumnScope('customer_id', 1), 'my-scope');
+        }
+
+        protected function table()
+        {
+            return 'posts';
+        }
+    }
+
+During the registration of scope you can define its name. This name is used to remove scope from model. Another
+purpose of scope name is to allow retrieve unscoped data. This can be done using `withoutScope` method on repository.
+The result is standard `Collection` so you can use all of its methods (e.g. `where`).
+
+    $posts = Post::withoutScope('my-scope');
 
 <a name="events"></a>
 ## Events
@@ -592,7 +624,7 @@ To start listening to model events, register event handler using on method. This
 
 For some cases Repository events can be very useful. The main reason for Repository events to be used is possibility to call methods on DI services.
 
-All of the default triggered events are exactly the same as with Model Events.
+All the default triggered events are exactly the same as with Model Events.
 
     namespace App\Repositories;
 

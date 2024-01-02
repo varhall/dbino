@@ -2,25 +2,17 @@
 
 namespace Varhall\Dbino\Collections;
 
+use Nette\Database\Table\Selection;
 use Varhall\Dbino\Configuration;
-use Varhall\Utilino\Collections\ICollection;
 
-/**
- * Nette Database extended class used for collection of related objects
- *
- * @author Ondrej Sibrava <sibrava@varhall.cz>
- */
-class GroupedCollection extends \Nette\Database\Table\GroupedSelection implements ICollection
+class GroupedCollection extends Collection
 {
-    use CollectionTrait;
-    
-    public function __construct(\Nette\Database\Table\GroupedSelection $selection, string $class)
+    public function __construct(Selection $selection, Configuration $configuration)
     {
-        foreach (get_object_vars($selection) as $property => $value) {
-            if (property_exists(self::class, $property))
-                $this->$property = &$selection->$property;
-        }
+        parent::__construct($selection, $configuration);
 
-        $this->class = $class;
+        foreach ($configuration->scopes as $scope) {
+            $scope->filter($this);
+        }
     }
 }

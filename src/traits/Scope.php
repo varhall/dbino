@@ -2,15 +2,15 @@
 
 namespace Varhall\Dbino\Traits;
 
-use Nette\Database\Table\Selection;
 use Nette\InvalidStateException;
 use Varhall\Dbino\Events\SaveArgs;
+use Varhall\Dbino\Scopes\ColumnScope;
 
 trait Scope
 {
-    public static function unscoped()
+    public static function unscoped(string|array $columns)
     {
-
+        return static::withoutScope(array_map(fn($column) => "scope.{$column}", (array) $columns));
     }
 
     /// CONFIGURATION
@@ -22,8 +22,12 @@ trait Scope
 
     protected function initializeScope()
     {
-        // register events
+        // initialize filters
+        foreach ($this->scopeDefinition() as $column => $value) {
+            $this->addScope(new ColumnScope($column, $value), "scope.{$column}");
+        }
 
+        // initialize events
         $this->on('saving', function(SaveArgs $args) {
             $definition = $this->scopeDefinition();
 
@@ -31,15 +35,5 @@ trait Scope
                 $this->$column = $value;
             }
         });
-
-        // register filter functions
-
-        $this->filters[] = function(Selection $collection) {
-            $definition = $this->scopeDefinition();
-
-            foreach ($definition as $column => $value) {
-                $collection->where($column, $value);
-            }
-        };
     }
 }
