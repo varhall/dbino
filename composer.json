@@ -17,7 +17,7 @@
 
 	"require": {
 		"php": ">=8.0",
-		"nette/database": "^3.1.9",
+		"nette/database": "~v3.1.0",
 		"nette/di": "^3.1",
 		"nette/security": "^v3.1",
 		"varhall/utilino": "^1.1"
