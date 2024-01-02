@@ -19,7 +19,7 @@ class BooksRepository extends Repository
 
     public function findAvailable(): Collection
     {
-        return Book::all()->where('available', true);
+        return $this->where('available', true);
     }
 
     public function whereAvailable(Collection $collection, $value)

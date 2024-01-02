@@ -34,10 +34,10 @@ For details on how to use this package, check out our [documentation](.docs).
 
 ## Versions
 
-| State       | Version       | Branch   | Nette | PHP     |
-|-------------|---------------|----------|-------|---------|
-| dev         | `dev-master`  | `master` | 3.0+  | `^8.0`  |
-| stable      | `^1.0`        | `master` | 3.0+  | `^8.0`  |
+| State       | Version | Branch | Nette | PHP    |
+|-------------|---------|--------|-------|--------|
+| stable      | `^1.0`  | `v1.0` | 3.0+  | `^8.0` |
+| stable      | `^2.0`  | `v2.0` | 3.0+  | `^8.1` |
 
 ## Development
 

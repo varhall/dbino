@@ -2,8 +2,7 @@
 
 namespace Varhall\Dbino\Tests\Models;
 
-use Varhall\Dbino\Plugins\Uuid;
-use Varhall\Dbino\Plugins\UuidPlugin;
+use Varhall\Dbino\Traits\Uuid;
 
 /**
  * Author test model

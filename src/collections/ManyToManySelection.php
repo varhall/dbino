@@ -49,7 +49,7 @@ class ManyToManySelection extends GroupedSelection
         return $this->context->table($this->intermediateTable)->where($this->foreignColumn, $this->foreignValue);
     }
 
-    public function attach($values)
+    public function attach($values): void
     {
         $indb = array_map(
             function($item) { return $item->{$this->referenceColumn}; },
@@ -76,7 +76,7 @@ class ManyToManySelection extends GroupedSelection
         $this->intermediateTable()->insert($values);
     }
 
-    public function detach($values = null)
+    public function detach($values = null): void
     {
         $intermediate = $this->intermediateTable();
 

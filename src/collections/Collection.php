@@ -10,10 +10,6 @@ use Varhall\Dbino\Model;
 use Varhall\Dbino\Traits\Events;
 use Varhall\Utilino\Collections\ArrayCollection;
 use Varhall\Utilino\Collections\ICollection;
-use Varhall\Utilino\Utils\Reflection;
-
-// @method int count(?string $column = null) Counts number of rows. If column is not provided returns count of result rows, otherwise runs new sql counting query.
-// @method Selection limit(?int $limit, ?int $offset = null) Sets limit clause, more calls rewrite old values.
 
 /**
  * Filtered table representation.

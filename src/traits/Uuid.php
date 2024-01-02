@@ -1,6 +1,6 @@
 <?php
 
-namespace Varhall\Dbino\Plugins;
+namespace Varhall\Dbino\Traits;
 
 
 use Varhall\Dbino\Events\InsertArgs;

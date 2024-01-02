@@ -30,8 +30,6 @@ Define database model class first which is ActiveRow extension
     {
         /**
          * The table associated with the model.
-         *
-         * @var string
          */
         protected function table()
         {
@@ -52,9 +50,30 @@ After the model is defined you can make simple database operation based on Activ
     // Retrieve the models matching the query constraints...
     $authors = Author::where('name', 'Hans');
 
+CRUD operations are also very simple.
+
+    // Create a new model instance and save it to the database
+    $author = Author::create([
+        'name'    => 'Hans',
+        'surname' => 'Winkler',
+        'enabled' => true
+    ]);
+
+    // Update the model in the database
+    Author::find(1)->update([
+        'name'    => 'Hans',
+        'surname' => 'Winkler',
+        'enabled' => true
+    ]);
+
+    // Delete the model from the database
+    Author::find(1)->delete();
+
 # More information
 
-- [Models](models.md)
-- [Relations](relations.md)
-- [Queries](queries.md)
-- [Casting](casting.md)
+To learn more about Dbino, check out the following topics:
+
+- [Models](models.md) - Defining models and their properties
+- [Relations](relations.md) - Defining relations between models
+- [Queries](queries.md) - Querying models
+- [Casting](casting.md) - Casting model properties
