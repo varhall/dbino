@@ -21,8 +21,6 @@ jobs:
       matrix:
         php: [ "8.3", "8.2", "8.1" ]
         os: [ubuntu-latest]
-        #os: [ubuntu-latest, windows-latest, macOS-latest]
-
     services:
       database:
         image: mariadb:latest
@@ -32,26 +30,52 @@ jobs:
           MYSQL_ROOT_PASSWORD: 'test'
           MYSQL_DATABASE: 'test'
         options: --health-cmd="healthcheck.sh --su-mysql --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
       - uses: actions/checkout@v3
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: "${{ env.extensions }}"
-
       - run: composer install --no-progress --prefer-dist
-
       - run: make tests
         shell: bash
         env:
           DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
           DATABASE_USER: 'root'
           DATABASE_PASSWORD: 'test'
-
       - if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: output
           path: tests/**/output
 
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    services:
+      database:
+        image: mariadb:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: 'test'
+          MYSQL_DATABASE: 'test'
+        options: --health-cmd="healthcheck.sh --su-mysql --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v3
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: "${{ env.extensions }}"
+      - run: composer install --no-progress --prefer-dist
+      - run: make coverage
+        shell: bash
+        env:
+          DATABASE_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=test'
+          DATABASE_USER: 'root'
+          DATABASE_PASSWORD: 'test'
+      - run: wget https://github.com/php-coveralls/php-coveralls/releases/download/v2.4.3/php-coveralls.phar
+      - env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: php php-coveralls.phar --verbose --config tests/.coveralls.yml
