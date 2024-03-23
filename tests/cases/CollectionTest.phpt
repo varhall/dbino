@@ -37,7 +37,7 @@ class CollectionTest extends DatabaseTestCase
     {
         $data = $this->collection->asArray();
 
-        foreach ($this->collection as $item) {
+        foreach ($data as $item) {
             Assert::type(Book::class, $item);
         }
 

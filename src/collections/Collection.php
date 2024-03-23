@@ -77,7 +77,11 @@ class Collection implements ICollection, \Iterator
 
             } else if ($result instanceof ActiveRow) {
                 return $this->createModel($result);
+
+            } else if (is_array($result)) {
+                return array_map(fn($row) => $this->createModel($row), $result);
             }
+
 
             return $result;
         }
