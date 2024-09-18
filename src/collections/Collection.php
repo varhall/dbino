@@ -23,7 +23,6 @@ use Varhall\Utilino\Collections\ICollection;
  * @method array fetchAssoc(string $path) Fetches all rows and returns associative tree.
  * @method Collection select(string $columns, ...$params) Adds select clause, more calls appends to the end.
  * @method Collection wherePrimary(mixed $key) Adds condition for primary key.
- * @method Collection where(string|array $condition, ...$params) Adds where condition, more calls append with AND.
  * @method Collection joinWhere(string $tableChain, string $condition, ...$params) Adds ON condition when joining specified table, more calls append with AND.
  * @method Collection whereOr(array $parameters) Adds where condition using the OR operator between parameters.
  * @method Collection order(string $columns, ...$params) Adds order clause, more calls append to the end.
@@ -92,6 +91,10 @@ class Collection implements ICollection, \Iterator
 
     /// PUBLIC METHODS
 
+    public function getSelection(): Selection
+    {
+        return $this->table;
+    }
 
 
 
@@ -137,6 +140,17 @@ class Collection implements ICollection, \Iterator
     public function limit(?int $limit, ?int $offset = null)
     {
         $this->table->limit($limit, $offset);
+        return $this;
+    }
+
+    public function where($condition, ...$params)
+    {
+        // replace Collection with Selection in ...$params
+        $params = array_map(function($param) {
+            return ($param instanceof Collection) ? $param->table : $param;
+        }, $params);
+
+        $this->table->where($condition, ...$params);
         return $this;
     }
 
