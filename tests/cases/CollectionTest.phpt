@@ -7,6 +7,7 @@ use Tester\Expect;
 use Tests\Engine\DatabaseTestCase;
 use Varhall\Dbino\Collections\Collection;
 use Varhall\Dbino\Dbino;
+use Varhall\Dbino\Tests\Models\Author;
 use Varhall\Dbino\Tests\Models\Book;
 use Varhall\Utilino\Collections\ArrayCollection;
 
@@ -120,6 +121,44 @@ class CollectionTest extends DatabaseTestCase
         Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
     }
 
+    public function testWhereCollectionArg()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Web programming',
+            'Oracle',
+        ];
+
+        $authors = $this->dbino->repository(Author::class)
+                        ->all()
+                        ->where('name', [ 'John', 'Martin' ])
+                        ->select('id');
+
+        $data = $this->collection->where('author_id', $authors);
+
+        Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
+    }
+
+    public function testWhereSelectionArg()
+    {
+        $expected = [
+            'PHP Tips & Tricks',
+            'MySQL Queries',
+            'Web programming',
+            'Oracle',
+        ];
+
+        $authors = $this->dbino->repository(Author::class)
+                    ->all()
+                    ->getSelection()
+                    ->where('name', [ 'John', 'Martin' ])
+                    ->select('id');
+
+        $data = $this->collection->where('author_id', $authors);
+
+        Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
+    }
 
     // ICollection methods
 
