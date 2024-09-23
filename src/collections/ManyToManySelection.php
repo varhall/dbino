@@ -30,9 +30,20 @@ class ManyToManySelection extends GroupedSelection
                                 string $referenceColumn,
                                 mixed $foreignValue)
     {
+        parent::__construct(
+            $selection->context,
+            $selection->conventions,
+            $selection->name,
+            $selection->column,
+            $selection->refTable,
+            $selection->cache?->getStorage()
+        );
+
         foreach (get_object_vars($selection) as $property => $value) {
-            if (property_exists(self::class, $property))
-                $this->$property = &$selection->$property;
+            $reflectionProperty = new \ReflectionProperty($this, $property);
+            if ($reflectionProperty && !$reflectionProperty->isReadOnly()) {
+                $reflectionProperty->setValue($this, $value);
+            }
         }
 
 
