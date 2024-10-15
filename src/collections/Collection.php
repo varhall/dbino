@@ -18,7 +18,6 @@ use Varhall\Utilino\Collections\ICollection;
  * @method Model|null get(mixed $key) Returns row specified by primary key.
  * @method Model|null fetch() Fetches single row object.
  * @method mixed fetchField(?string $column = null) Fetches single field.
- * @method array fetchPairs(string|int|null $key = null, string|int|null $value = null) Fetches all rows as associative array.
  * @method Model[] fetchAll() Fetches all rows.
  * @method array fetchAssoc(string $path) Fetches all rows and returns associative tree.
  * @method Collection select(string $columns, ...$params) Adds select clause, more calls appends to the end.
@@ -132,17 +131,27 @@ class Collection implements ICollection, \Iterator
 
     /// OVERRIDEN METHODS
 
+    /**
+     * Counts number of rows. If column is not provided returns count of result rows, otherwise runs new sql counting query.
+     */
     public function count(?string $column = null): int
     {
         return $this->table->count($column);
     }
 
+    /**
+     * Sets limit clause, more calls rewrite old values.
+     */
     public function limit(?int $limit, ?int $offset = null)
     {
         $this->table->limit($limit, $offset);
         return $this;
     }
 
+    /**
+     * Adds where condition, more calls appends with AND.
+     * @param  string|array  $condition  possibly containing ?
+     */
     public function where($condition, ...$params)
     {
         // replace Collection with Selection in ...$params
@@ -154,6 +163,13 @@ class Collection implements ICollection, \Iterator
         return $this;
     }
 
+    /**
+     * Fetches all rows as associative array.
+     */
+    public function fetchPairs(string|int|\Closure|null $keyOrCallback = null, string|int|null $value = null): array
+    {
+        return $this->table->fetchPairs($keyOrCallback, $value);
+    }
 
 
 

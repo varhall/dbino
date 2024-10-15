@@ -160,6 +160,36 @@ class CollectionTest extends DatabaseTestCase
         Assert::equal($expected, $data->map(function($item) { return $item->title; })->toArray());
     }
 
+    public function testFetchPairs_object()
+    {
+        $expected = [
+            1   => 'PHP Tips & Tricks',
+            2   => 'MySQL Queries',
+            3   => 'Einfach JavaScript',
+            4   => 'Web programming',
+            5   => 'Oracle',
+        ];
+
+        $data = $this->collection->fetchPairs('id');
+
+        Assert::equal($expected, array_map(function($item) { return $item->title; }, $data));
+    }
+
+    public function testFetchPairs_value()
+    {
+        $expected = [
+            1   => 'PHP Tips & Tricks',
+            2   => 'MySQL Queries',
+            3   => 'Einfach JavaScript',
+            4   => 'Web programming',
+            5   => 'Oracle',
+        ];
+
+        $data = $this->collection->fetchPairs('id', 'title');
+
+        Assert::equal($expected, $data);
+    }
+
     // ICollection methods
 
     public function testEach()
