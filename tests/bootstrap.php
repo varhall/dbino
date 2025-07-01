@@ -11,8 +11,8 @@ if (@!include __DIR__ . '/../vendor/autoload.php') {
 Environment::setup(__DIR__);
 
 define('SRC_DIR', realpath(TESTER_DIR . '/../src'));
-define('CONFIG_DIR', TESTER_DIR . '/config');
-define('FIXTURES_DIR', TESTER_DIR . '/fixtures/sql');
+define('CONFIG_DIR', TESTER_DIR . '/Config');
+define('FIXTURES_DIR', TESTER_DIR . '/Fixtures/SQL');
 
 Environment::setupRobotLoader(function($loader) {
     $loader->addDirectory(__DIR__);
