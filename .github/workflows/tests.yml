@@ -19,7 +19,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        php: [ "8.3", "8.2", "8.1" ]
+        php: [ "8.4", "8.3", "8.2", "8.1" ]
         os: [ubuntu-latest]
     services:
       database:
@@ -31,7 +31,7 @@ jobs:
           MYSQL_DATABASE: 'test'
         options: --health-cmd="healthcheck.sh --su-mysql --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -44,7 +44,7 @@ jobs:
           DATABASE_USER: 'root'
           DATABASE_PASSWORD: 'test'
       - if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: output
           path: tests/**/output
@@ -63,10 +63,10 @@ jobs:
           MYSQL_DATABASE: 'test'
         options: --health-cmd="healthcheck.sh --su-mysql --connect --innodb_initialized" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.4
           extensions: "${{ env.extensions }}"
       - run: composer install --no-progress --prefer-dist
       - run: make coverage

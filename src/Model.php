@@ -35,7 +35,7 @@ use Varhall\Utilino\Utils\Reflection;
 abstract class Model implements ISerializable
 {
     use Events {
-        raise as private raise_Events;
+        Events::raise as private raise_Events;
     }
 
     private Dbino $dbino;
@@ -291,14 +291,16 @@ abstract class Model implements ISerializable
         foreach ($values as $key => $value) {
             $values[$key] = $this->readField($key, $value);
 
-            if ($value instanceof \DateTime)
-                $values[$key] = $value->format($this->serializationDateFormat());
+            if ($values[$key] instanceof \Varhall\Utilino\ISerializable) {
+                $values[$key] = $values[$key]->toArray();
+            }
 
-            if (in_array($key, $this->hiddenAttributes()))
+            if ($values[$key] instanceof \DateTime) {
+                $values[$key] = $values[$key]->format($this->serializationDateFormat());
+            }
+
+            if (in_array($key, $this->hiddenAttributes())) {
                 unset($values[$key]);
-
-            if ($value instanceof \Varhall\Utilino\ISerializable) {
-                $values[$key] = $value->toArray();
             }
         }
 

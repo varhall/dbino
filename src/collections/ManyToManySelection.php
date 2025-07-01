@@ -98,7 +98,7 @@ class ManyToManySelection extends GroupedSelection
         $intermediate->delete();
     }
 
-    public function sync($values, callable $func = null)
+    public function sync($values, ?callable $func = null)
     {
         if (is_array($values)) {
             $values = array_unique($values);
