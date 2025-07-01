@@ -4,6 +4,7 @@ namespace Tests\Cases\Model;
 
 use Tester\Assert;
 use Tests\Engine\DatabaseTestCase;
+use Varhall\Dbino\Tests\Models\Author;
 use Varhall\Dbino\Tests\Models\Product;
 
 require_once __DIR__ . '/../../bootstrap.php';
@@ -124,6 +125,39 @@ class AttributesTest extends DatabaseTestCase
 
         Assert::true(isset($product->name));
         Assert::false(isset($product->unknown));
+    }
+
+
+    public function testOffsetGet()
+    {
+        $author = Author::find(1);
+
+        Assert::equal('John', $author['name']);
+    }
+
+    public function testOffsetSet()
+    {
+        $author = Author::find(1);
+
+        $author['name'] = 'foo';
+        Assert::equal('foo', $author->name);
+    }
+
+    public function testOffsetIsset()
+    {
+        $author = Author::find(1);
+
+        Assert::true(isset($author['name']));
+        Assert::false(isset($author['unknown']));
+    }
+
+    public function testOffsetUnset()
+    {
+        $author = Author::find(1);
+
+        Assert::throws(function() use ($author) {
+            unset($author['name']);
+        }, \Nette\NotSupportedException::class);
     }
 }
 

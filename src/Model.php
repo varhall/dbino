@@ -32,7 +32,7 @@ use Varhall\Utilino\Utils\Reflection;
  * @method static Collection withTrashed()
  * @method static Collection onlyTrashed()
  */
-abstract class Model implements ISerializable
+abstract class Model implements ISerializable, \ArrayAccess
 {
     use Events {
         Events::raise as private raise_Events;
@@ -135,6 +135,26 @@ abstract class Model implements ISerializable
         return call_user_func_array([ $repository, $name ], $arguments);
     }
 
+
+    public function offsetGet(mixed $offset): mixed
+    {
+        return $this->__get($offset);
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        $this->__set($offset, $value);
+    }
+
+    public function offsetExists(mixed $offset): bool
+    {
+        return $this->__isset($offset);
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        throw new \Nette\NotSupportedException('Unsetting attributes is not supported');
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////
