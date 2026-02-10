@@ -17,7 +17,7 @@
 
 	"require": {
 		"php": ">=8.1",
-		"nette/database": "^3.2",
+		"nette/database": "^v3.2",
 		"nette/di": "^v3.2",
 		"nette/security": "^v3.2",
 		"varhall/utilino": "^v1.2"
@@ -27,7 +27,7 @@
 		"ninjify/nunjuck": "^v0.4",
 		"mockery/mockery": "^1.6",
 		"nette/bootstrap": "^v3.2",
-		"nette/robot-loader": "^v4.0",
+		"nette/robot-loader": "^v4.1",
 		"nette/http": "^v3.3"
 	},
 
