@@ -130,7 +130,7 @@ class ManyToManySelection extends GroupedSelection
         return $sql;
     }
 
-    public function insert(iterable $data): ActiveRow|array|int|bool
+    public function insert(iterable $data): ActiveRow|array|int
     {
         throw new NotSupportedException('Collection is readonly');
     }
